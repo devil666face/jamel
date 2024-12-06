@@ -1,17 +1,17 @@
-package main
+// package main
 
-import (
-	"fmt"
-	"log"
-	"os"
+// import (
+// 	"fmt"
+// 	"log"
+// 	"os"
 
-	"jamel/pkg/sbom"
-)
+// 	"jamel/pkg/sbom"
+// )
 
-func main() {
-	out, err := sbom.Get(os.Args[1])
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Println(string(out))
-}
+// func main() {
+// 	out, err := sbom.Get(os.Args[1])
+// 	if err != nil {
+// 		log.Fatalln(err)
+// 	}
+// 	fmt.Println(string(out))
+// }

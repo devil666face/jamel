@@ -5,7 +5,8 @@ include build.env
 export $(shell sed 's/=.*//' build.env)
 $(shell [ -f bin ] || mkdir -p $(BIN))
 
-SBOM = sbom
+# SBOM = sbom
+CVE = cve
 GOBIN = go
 PATH := $(BIN):$(PATH)
 GOARCH = amd64
@@ -22,9 +23,14 @@ help:
 		objcopy --strip-unneeded $$file; \
 	done
 
-build: build-sbom .crop ## build all
+build: build-cve .crop ## build all
 
-build-sbom: ## build sbom
+# build-sbom: ## build sbom
+# 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
+# 		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+# 		-o $(BIN)/$(SBOM) cmd/$(SBOM)/main.go
+
+build-cve: ## build cves
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
 		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
-		-o $(BIN)/$(SBOM) cmd/$(SBOM)/main.go
+		-o $(BIN)/$(CVE) cmd/$(CVE)/main.go

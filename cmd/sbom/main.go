@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	out, err := sbom.Get(os.Args[0])
+	out, err := sbom.Get(os.Args[1])
 	if err != nil {
 		log.Fatalln(err)
 	}

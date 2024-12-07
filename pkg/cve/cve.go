@@ -3,10 +3,12 @@ package cve
 import (
 	"bytes"
 	"fmt"
+	"jamel/pkg/http"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/grype/cmd/grype/cli/options"
 	"github.com/anchore/grype/grype"
+	"github.com/anchore/grype/grype/db/legacy/distribution"
 	"github.com/anchore/grype/grype/matcher"
 	"github.com/anchore/grype/grype/matcher/dotnet"
 	"github.com/anchore/grype/grype/matcher/golang"
@@ -21,6 +23,10 @@ import (
 	"github.com/anchore/grype/grype/vex"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cataloging"
+)
+
+const (
+	certfile = "/tmp/cert"
 )
 
 var (
@@ -73,10 +79,15 @@ func getMatchers(opts *options.Grype) []matcher.Matcher {
 }
 
 func Get(input string) ([]byte, error) {
+	if err := Update(opts.DB); err != nil {
+		return nil, err
+	}
+
 	store, status, closer, err := grype.LoadVulnerabilityDB(
 		opts.DB.ToCuratorConfig(),
 		opts.DB.AutoUpdate,
 	)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to load vulnerability db: %w", err)
 	}
@@ -123,4 +134,25 @@ func Get(input string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to write result in buf: %w", err)
 	}
 	return buf.Bytes(), nil
+}
+
+func Update(opts options.Database) error {
+	if err := http.SaveCAs([]string{
+		"https://toolbox-data.anchore.io",
+		"https://grype.anchore.io",
+	}, certfile); err != nil {
+		return err
+	}
+	config := opts.ToCuratorConfig()
+	config.RequireUpdateCheck = true
+	config.CACert = certfile
+
+	curator, err := distribution.NewCurator(config)
+	if err != nil {
+		return fmt.Errorf("failed to get curator: %w", err)
+	}
+	if _, err := curator.Update(); err != nil {
+		return fmt.Errorf("unable to update vulnerability database: %w", err)
+	}
+	return nil
 }

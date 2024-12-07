@@ -6,7 +6,8 @@ export $(shell sed 's/=.*//' build.env)
 $(shell [ -f bin ] || mkdir -p $(BIN))
 
 # SBOM = sbom
-CVE = cve
+APP = jamel
+CVE = client
 GOBIN = go
 PATH := $(BIN):$(PATH)
 GOARCH = amd64
@@ -18,7 +19,7 @@ help:
 	@cat $(MAKEFILE_LIST) | grep -E '^[a-zA-Z_-]+:.*?## .*$$' | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .crop:
-	for file in $(wildcard $(BIN)/*); do \
+	for file in $(wildcard $(BIN)/$(APP)_*); do \
 		strip $$file; \
 		objcopy --strip-unneeded $$file; \
 	done
@@ -33,4 +34,30 @@ build: build-cve .crop ## build all
 build-cve: ## build cves
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
 		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
-		-o $(BIN)/$(CVE) cmd/$(CVE)/main.go
+		-o $(BIN)/$(APP)-$(CVE) cmd/$(CVE)/main.go
+
+gen-proto: install-proto ## generate golang from protobuf files
+	protoc -I proto/ proto/jamel/*.proto --go_out=./gen/go/ --go_opt=paths=source_relative --go-grpc_out=./gen/go/ --go-grpc_opt=paths=source_relative
+	
+install-proto: ## install protobuf requirements
+	[ -f $(BIN)/protoc-gen-go ] || go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && cp $(GOPATH)/bin/protoc-gen-go $(BIN)
+	[ -f $(BIN)/protoc-gen-go-grpc ] || go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest && cp $(GOPATH)/bin/protoc-gen-go-grpc $(BIN)
+	[ -f $(BIN)/protoc ] || (curl -sSfL https://github.com/protocolbuffers/protobuf/releases/download/v29.1/protoc-29.1-linux-x86_64.zip -o $(BIN)/protoc-29.1-linux-x86_64.zip && unzip -o $(BIN)/protoc-29.1-linux-x86_64.zip && rm -rf include readme.txt)
+
+remove-certs: ## remove old certs
+	find cmd -name "*.crt" -delete
+	find cmd -name "*.key" -delete
+
+gen-certs: ## generate grpc ssl certs
+	echo "subjectAltName = $(SUBJECT_ALT_NAME)" > extfile.cnf
+
+	for name in server client admin; do \
+		openssl req -newkey rsa:4096 -nodes -keyout $$name.key -out $$name.csr -subj "/CN=$$name"; \
+		openssl x509 -req -sha256 -days 365 -in $$name.csr -signkey $$name.key -out $$name.crt -extfile extfile.cnf; \
+	done
+
+	cp server.key server.crt client.crt admin.crt cmd/server
+	cp client.key client.crt server.crt cmd/client
+	cp admin.key admin.crt server.crt cmd/admin
+
+	rm -f *.crt *.key *.cnf *.csr

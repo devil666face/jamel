@@ -18,8 +18,8 @@ import (
 	"github.com/anchore/grype/grype/matcher/ruby"
 	"github.com/anchore/grype/grype/matcher/stock"
 	"github.com/anchore/grype/grype/pkg"
+	"github.com/anchore/grype/grype/presenter/json"
 	"github.com/anchore/grype/grype/presenter/models"
-	"github.com/anchore/grype/grype/presenter/table"
 	"github.com/anchore/grype/grype/vex"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cataloging"
@@ -127,8 +127,9 @@ func Get(input string) ([]byte, error) {
 		DBStatus:         status,
 	}
 	var (
-		buf  bytes.Buffer
-		pres = table.NewPresenter(model, false)
+		buf bytes.Buffer
+		// pres = table.NewPresenter(model, false)
+		pres = json.NewPresenter(model)
 	)
 	if err := pres.Present(&buf); err != nil {
 		return nil, fmt.Errorf("failed to write result in buf: %w", err)

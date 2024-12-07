@@ -19,3 +19,15 @@ func WriteFile(
 	}
 	return nil
 }
+
+func OpenFile(filename string) (*os.File, fs.FileInfo, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error file %s not open: %w", filename, err)
+	}
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error to get file size: %w", err)
+	}
+	return f, stat, nil
+}

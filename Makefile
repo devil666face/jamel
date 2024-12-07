@@ -7,7 +7,9 @@ $(shell [ -f bin ] || mkdir -p $(BIN))
 
 # SBOM = sbom
 APP = jamel
-CVE = client
+CLIENT = client
+SERVER = server
+ADMIN = admin
 GOBIN = go
 PATH := $(BIN):$(PATH)
 GOARCH = amd64
@@ -24,17 +26,27 @@ help:
 		objcopy --strip-unneeded $$file; \
 	done
 
-build: build-cve .crop ## build all
+build: build-client build-server build-admin .crop ## build all
 
 # build-sbom: ## build sbom
 # 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
 # 		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
 # 		-o $(BIN)/$(SBOM) cmd/$(SBOM)/main.go
 
-build-cve: ## build cves
+build-client: ## build client
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
 		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
-		-o $(BIN)/$(APP)-$(CVE) cmd/$(CVE)/main.go
+		-o $(BIN)/$(APP)-$(CLIENT) cmd/$(CLIENT)/main.go
+
+build-server: ## build server
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
+		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+		-o $(BIN)/$(APP)-$(SERVER) cmd/$(SERVER)/main.go
+
+build-admin: ## build admin
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
+		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+		-o $(BIN)/$(APP)-$(ADMIN) cmd/$(ADMIN)/main.go
 
 gen-proto: install-proto ## generate golang from protobuf files
 	protoc -I proto/ proto/jamel/*.proto --go_out=./gen/go/ --go_opt=paths=source_relative --go-grpc_out=./gen/go/ --go-grpc_opt=paths=source_relative

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package jamel;
+option go_package = "jamel/;jamel";
+
+message TaskRequest {
+  string filename = 1;
+  bytes chunk     = 2;
+  int64 size      = 3;
+}
+
+message TaskResponse {
+  string task_id = 1;
+}

@@ -7,7 +7,10 @@
 package jamel
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,10 +18,15 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	JamelService_NewTaskFromFile_FullMethodName = "/jamel.JamelService/NewTaskFromFile"
+)
+
 // JamelServiceClient is the client API for JamelService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type JamelServiceClient interface {
+	NewTaskFromFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[TaskRequest, TaskResponse], error)
 }
 
 type jamelServiceClient struct {
@@ -29,10 +37,24 @@ func NewJamelServiceClient(cc grpc.ClientConnInterface) JamelServiceClient {
 	return &jamelServiceClient{cc}
 }
 
+func (c *jamelServiceClient) NewTaskFromFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[TaskRequest, TaskResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &JamelService_ServiceDesc.Streams[0], JamelService_NewTaskFromFile_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[TaskRequest, TaskResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type JamelService_NewTaskFromFileClient = grpc.ClientStreamingClient[TaskRequest, TaskResponse]
+
 // JamelServiceServer is the server API for JamelService service.
 // All implementations must embed UnimplementedJamelServiceServer
 // for forward compatibility.
 type JamelServiceServer interface {
+	NewTaskFromFile(grpc.ClientStreamingServer[TaskRequest, TaskResponse]) error
 	mustEmbedUnimplementedJamelServiceServer()
 }
 
@@ -43,6 +65,9 @@ type JamelServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedJamelServiceServer struct{}
 
+func (UnimplementedJamelServiceServer) NewTaskFromFile(grpc.ClientStreamingServer[TaskRequest, TaskResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method NewTaskFromFile not implemented")
+}
 func (UnimplementedJamelServiceServer) mustEmbedUnimplementedJamelServiceServer() {}
 func (UnimplementedJamelServiceServer) testEmbeddedByValue()                      {}
 
@@ -64,6 +89,13 @@ func RegisterJamelServiceServer(s grpc.ServiceRegistrar, srv JamelServiceServer)
 	s.RegisterService(&JamelService_ServiceDesc, srv)
 }
 
+func _JamelService_NewTaskFromFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(JamelServiceServer).NewTaskFromFile(&grpc.GenericServerStream[TaskRequest, TaskResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type JamelService_NewTaskFromFileServer = grpc.ClientStreamingServer[TaskRequest, TaskResponse]
+
 // JamelService_ServiceDesc is the grpc.ServiceDesc for JamelService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -71,6 +103,12 @@ var JamelService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "jamel.JamelService",
 	HandlerType: (*JamelServiceServer)(nil),
 	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "jamel/jamel_service.proto",
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "NewTaskFromFile",
+			Handler:       _JamelService_NewTaskFromFile_Handler,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "jamel/jamel_service.proto",
 }

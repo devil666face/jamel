@@ -15,6 +15,7 @@ import (
 	"jamel/internal/server/config"
 	"jamel/internal/server/grpc/handler"
 	"jamel/internal/server/service/store"
+	"jamel/pkg/rmq"
 	"jamel/pkg/s3"
 
 	"google.golang.org/grpc/credentials"
@@ -55,6 +56,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create s3 obj: %v", err)
 	}
+
+	_rmq, err := rmq.New(
+		_config.RMQConnect,
+		_config.RMQUsername, _config.RMQPassword,
+		"jamel_task", "jamel_result",
+	)
+	if err != nil {
+		log.Fatalf("failed rmq connect: %v", err)
+	}
+
+	fmt.Println(_rmq)
 
 	_server := server.Must(
 		creds,

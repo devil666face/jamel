@@ -1,20 +1,21 @@
 package config
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	GrpcIP       string `env:"GRPC_IP" env-default:"0.0.0.0"`
-	GrpcPort     uint   `env:"GRPC_PORT" env-default:"8443"`
+	GrpcConnect  string `env:"GRPC_CONNECT" env-default:"127.0.0.1:8443"`
 	SqliteDB     string `env:"SQLITE_DB" env-default:"db/db.sqlite3"`
 	AuthUsername string `env:"AUTH_USERNAME" env-default:"user"`
 	AuthPassword string `env:"AUTH_PASSWORD" env-default:"Qwerty123!"`
 	LogFile      string `env:"LOG_FILE" env-default:"jamel-server.log"`
-	GrpcConnect  string
+	S3Conntect   string `env:"S3_CONNECT" env-default:"127.0.0.1:9000"`
+	S3Username   string `env:"S3_USERNAME" env-default:"minio"`
+	S3Password   string `env:"S3_PASSWORD" env-default:"password"`
+	S3Bucket     string `env:"S3_BUCKET" env-default:"jamel"`
 }
 
 func Must() *Config {
@@ -24,6 +25,5 @@ func Must() *Config {
 			log.Fatalf("env variable not found: %s", err)
 		}
 	}
-	_config.GrpcConnect = fmt.Sprintf("%s:%d", _config.GrpcIP, _config.GrpcPort)
 	return &_config
 }

@@ -73,3 +73,11 @@ gen-certs: ## generate grpc ssl certs
 	cp admin.key admin.crt server.crt cmd/admin
 
 	rm -f *.crt *.key *.cnf *.csr
+
+dev-up: ## up development environment
+	docker compose -f docker-compose.dev.yaml up -d
+
+dev-rm: ## rm development environment
+	docker compose -f docker-compose.dev.yaml down
+	sudo rm -rf rabbitmq
+	sudo rm -rf minio

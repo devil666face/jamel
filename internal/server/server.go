@@ -16,15 +16,18 @@ type DB interface {
 
 type Server struct {
 	db DB
+	s3 handler.S3
 	jamel.UnimplementedJamelServiceServer
 }
 
 func Must(
 	creds credentials.TransportCredentials,
 	_db DB,
+	_s3 handler.S3,
 ) *grpc.Server {
 	_server := &Server{
 		db: _db,
+		s3: _s3,
 	}
 	_grpc := grpc.NewServer(
 		grpc.Creds(creds),
@@ -39,6 +42,7 @@ func Must(
 func (s *Server) wrap(ctx *context.Context) *handler.Handler {
 	return handler.New(
 		ctx,
+		s.s3,
 	)
 }
 

@@ -6,3 +6,5 @@
 /static
 /jamel-server.log
 /ubuntu.tar
+/rabbitmq
+/minio

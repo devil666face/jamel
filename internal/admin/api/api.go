@@ -72,8 +72,10 @@ func (a *Api) NewTaskFromFile(filename string) error {
 		}
 		_p = percent
 	}
-	if _, err := stream.CloseAndRecv(); err != nil {
+	resp, err := stream.CloseAndRecv()
+	if err != nil {
 		return fmt.Errorf("error to get success request about uploading: %w", err)
 	}
+	fmt.Println(resp)
 	return nil
 }

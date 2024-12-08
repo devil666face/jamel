@@ -10,5 +10,6 @@ message TaskRequest {
 }
 
 message TaskResponse {
-  string task_id = 1;
+  string task_id  = 1;
+  string filename = 2;
 }

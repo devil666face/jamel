@@ -15,6 +15,7 @@ import (
 	"jamel/internal/server/config"
 	"jamel/internal/server/grpc/handler"
 	"jamel/internal/server/service/store"
+	"jamel/pkg/s3"
 
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/grpclog"
@@ -46,9 +47,19 @@ func main() {
 		_config.SqliteDB,
 		[]any{},
 	)
+	_s3, err := s3.New(
+		_config.S3Conntect,
+		_config.S3Username, _config.S3Password,
+		_config.S3Bucket,
+	)
+	if err != nil {
+		log.Fatalf("failed to create s3 obj: %v", err)
+	}
+
 	_server := server.Must(
 		creds,
 		_store,
+		_s3,
 	)
 	lis, err := net.Listen("tcp", _config.GrpcConnect)
 	if err != nil {

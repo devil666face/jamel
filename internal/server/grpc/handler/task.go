@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"jamel/gen/go/jamel"
+	"jamel/pkg/rmq"
 
 	"github.com/google/uuid"
 )
@@ -41,11 +43,19 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 	if err != nil {
 		return fmt.Errorf("failed to upload on s3: %w", err)
 	}
-	return stream.SendAndClose(
-		&jamel.TaskResponse{
-			TaskId:   objid,
-			Filename: filename,
-		},
-	)
 
+	var resp = &jamel.TaskResponse{
+		TaskId:   objid,
+		Filename: filename,
+	}
+	data, err := json.Marshal(resp)
+	if err != nil {
+		return fmt.Errorf("falied to serialize in json: %w", err)
+	}
+	if err := h.rmq.Publish(rmq.TaskQueue, data); err != nil {
+		return fmt.Errorf("failed to set task in queue: %w", err)
+	}
+	return stream.SendAndClose(
+		resp,
+	)
 }

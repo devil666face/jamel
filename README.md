@@ -10,3 +10,5 @@ file:path/to/yourfile
 sbom:path/to/syft.json
 registry:yourrepo/yourimage:tag
 ```
+
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock ubuntu:latest bash

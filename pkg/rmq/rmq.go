@@ -7,6 +7,11 @@ import (
 	"github.com/streadway/amqp"
 )
 
+const (
+	TaskQueue   = "jamel_task"
+	ResultQueue = "jamel_result"
+)
+
 type queueset struct {
 	set map[string]amqp.Queue
 	s   sync.RWMutex

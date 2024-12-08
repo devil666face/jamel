@@ -60,18 +60,17 @@ func main() {
 	_rmq, err := rmq.New(
 		_config.RMQConnect,
 		_config.RMQUsername, _config.RMQPassword,
-		"jamel_task", "jamel_result",
+		rmq.TaskQueue, rmq.ResultQueue,
 	)
 	if err != nil {
 		log.Fatalf("failed rmq connect: %v", err)
 	}
 
-	fmt.Println(_rmq)
-
 	_server := server.Must(
 		creds,
 		_store,
 		_s3,
+		_rmq,
 	)
 	lis, err := net.Listen("tcp", _config.GrpcConnect)
 	if err != nil {

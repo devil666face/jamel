@@ -81,3 +81,7 @@ dev-rm: ## rm development environment
 	docker compose -f docker-compose.dev.yaml down
 	sudo rm -rf rabbitmq
 	sudo rm -rf minio
+
+build-images: ## build Docker images with apps
+	docker build -t git.codenrock.com:5050/5hm3l/jamel/$(APP)-$(CLIENT) -f Dockerfile.client .
+	docker build -t git.codenrock.com:5050/5hm3l/jamel/$(APP)-$(SERVER) -f Dockerfile.server .

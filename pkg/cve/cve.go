@@ -104,6 +104,7 @@ func (c *Cve) Update() error {
 	defer c.m.Unlock()
 
 	log.Println("start update task")
+	defer log.Println("updated finished")
 
 	if err := http.SaveCAs([]string{
 		"https://toolbox-data.anchore.io",

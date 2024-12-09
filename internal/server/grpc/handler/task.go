@@ -53,7 +53,7 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 		return fmt.Errorf("failed to set task in queue: %w", err)
 	}
 
-	resp, err = h.results.WaitResp(resp.TaskId, 60)
+	resp, err = h.results.WaitResp(resp.TaskId, 120)
 	if err != nil {
 		return fmt.Errorf("failed to get resp from result queue: %w", err)
 	}

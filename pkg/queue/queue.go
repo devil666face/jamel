@@ -17,7 +17,7 @@ var (
 
 type Queue struct {
 	s     map[string]*jamel.TaskResponse
-	mutex sync.RWMutex
+	mutex sync.Mutex
 }
 
 func New() *Queue {
@@ -27,8 +27,8 @@ func New() *Queue {
 }
 
 func (q *Queue) Get(id string) (*jamel.TaskResponse, error) {
-	q.mutex.RLock()
-	defer q.mutex.RUnlock()
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	resp, ok := q.s[id]
 	if !ok {
 		return nil, ErrNotFound

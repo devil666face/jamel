@@ -1,0 +1,17 @@
+FROM golang:1.23.4-alpine AS builder
+
+WORKDIR /go/src/app
+
+COPY . .
+
+RUN apk add --no-cache make 
+
+RUN make build-client
+
+FROM alpine:3.21
+
+WORKDIR /app
+
+COPY --from=builder /go/src/app/bin/jamel-client /app/jamel-client
+
+ENTRYPOINT [ "./jamel-client" ]

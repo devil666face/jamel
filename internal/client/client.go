@@ -4,37 +4,50 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"jamel/gen/go/jamel"
-	"jamel/pkg/cve"
-	"jamel/pkg/rmq"
 	"os"
+
+	"jamel/gen/go/jamel"
+	"jamel/pkg/rmq"
 
 	"github.com/streadway/amqp"
 )
 
 type S3 interface {
-	Upload(string) (string, error)
 	Download(string) (string, error)
 }
 
 type Rmq interface {
 	Publish(string, []byte) error
-	Consume(string, chan<- amqp.Delivery) error
+	Consume(context.Context, string, chan<- amqp.Delivery) error
+}
+
+type Cve interface {
+	Get(string, string) ([]byte, error)
 }
 
 type Client struct {
 	s3  S3
 	rmq Rmq
+	cve Cve
 }
 
 func Must(
 	_s3 S3,
 	_rmq Rmq,
+	_cve Cve,
 ) *Client {
 	return &Client{
 		s3:  _s3,
 		rmq: _rmq,
+		cve: _cve,
 	}
+}
+
+var TaskTypeMap = map[jamel.TaskType]string{
+	jamel.TaskType_DOCKER:         "docker",
+	jamel.TaskType_DOCKER_ARCHIVE: "docker-archive",
+	jamel.TaskType_DIR:            "dir",
+	jamel.TaskType_SBOM:           "sbom",
 }
 
 func (c *Client) Run() error {
@@ -47,39 +60,47 @@ func (c *Client) Run() error {
 	defer close(errch)
 	defer cancel()
 
-	if err := c.rmq.Consume(rmq.TaskQueue, taskch); err != nil {
+	if err := c.rmq.Consume(ctx, rmq.TaskQueue, taskch); err != nil {
 		return fmt.Errorf("failed to consume queue: %w", err)
 	}
 
 	go func() {
-		defer close(errch) // Ensure the error channel is closed when the goroutine exits
 		for data := range taskch {
-			var task jamel.TaskResponse
+			var task = jamel.TaskResponse{}
 			if err := json.Unmarshal(data.Body, &task); err != nil {
 				errch <- fmt.Errorf("unmarshal task from queue error: %w", err)
-				cancel()
-				return
+				continue
 			}
-			fmt.Println(task)
 			if _, err := c.s3.Download(task.TaskId); err != nil {
 				errch <- fmt.Errorf("download from s3 error: %w", err)
-				cancel()
-				return
+				continue
 			}
-			out, err := cve.Get(fmt.Sprintf("docker-archive:%s", task.TaskId))
+			out, err := c.cve.Get(TaskTypeMap[task.TaskType], task.TaskId)
 			if err != nil {
 				errch <- fmt.Errorf("getting cves error: %w", err)
+				continue
 			}
-			fmt.Println(string(out))
-			os.Remove(task.TaskId)
-
+			task.Report = string(out)
+			data, err := json.Marshal(&task)
+			if err != nil {
+				errch <- fmt.Errorf("failed to marshal result before set in queue: %w", err)
+				continue
+			}
+			if err := c.rmq.Publish(rmq.ResultQueue, data); err != nil {
+				errch <- fmt.Errorf("failed to set in result queue: %w", err)
+				continue
+			}
+			if err := os.Remove(task.TaskId); err != nil {
+				errch <- fmt.Errorf("failed to remove: %w", err)
+				continue
+			}
 		}
 	}()
 
-	select {
-	case <-ctx.Done():
-		return <-errch
-	case err := <-errch:
-		return err
+	for err := range errch {
+		if err != nil {
+			return fmt.Errorf("task queue error: %w", err)
+		}
 	}
+	return nil
 }

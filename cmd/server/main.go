@@ -38,6 +38,9 @@ func main() {
 	if err := os.MkdirAll(handler.StaticDir, 0o755); err != nil {
 		log.Fatalf("failed to create dir for static files: %v", err)
 	}
+	if err := os.MkdirAll("db", 0o755); err != nil {
+		log.Fatalf("failed to create dir for db: %v", err)
+	}
 
 	creds, err := loadTLSCreds()
 	if err != nil {
@@ -90,10 +93,17 @@ func main() {
 		),
 	)
 
-	if err := _server.Serve(lis); err != nil {
+	go func() {
+		for {
+			if err := _server.ResponseQueueHandler(); err != nil {
+				log.Printf("critical queue runtime error: %v", err)
+			}
+		}
+	}()
+
+	if err := _server.GrpcServer.Serve(lis); err != nil {
 		log.Fatalf("fatal server error: %v", err)
 	}
-	os.Exit(0)
 }
 
 func loadTLSCreds() (credentials.TransportCredentials, error) {

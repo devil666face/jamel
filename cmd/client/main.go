@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
 
 	"jamel/internal/client"
 	"jamel/internal/client/config"
@@ -14,6 +12,7 @@ import (
 
 func main() {
 	_config := config.Must()
+
 	_s3, err := s3.New(
 		_config.S3Conntect,
 		_config.S3Username, _config.S3Password,
@@ -31,17 +30,26 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed rmq connect: %v", err)
 	}
+
+	_cve, err := cve.New()
+	if err != nil {
+		log.Fatalf("failed to create cve checker: %v", err)
+	}
+
 	_client := client.Must(
 		_s3,
 		_rmq,
+		_cve,
 	)
-	if err := _client.Run(); err != nil {
-		log.Fatalf("critical runtime error: %v", err)
+	for {
+		if err := _client.Run(); err != nil {
+			log.Printf("critical queue runtime error: %v", err)
+		}
 	}
 
-	out, err := cve.Get(os.Args[1])
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Println(string(out))
+	// out, err := cve.Get(os.Args[1])
+	// 	log.Fatalln(err)
+	// if err != nil {
+	// }
+	// fmt.Println(string(out))
 }

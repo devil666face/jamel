@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"jamel/pkg/http"
+	"log"
+	"sync"
+	"time"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/grype/cmd/grype/cli/options"
@@ -29,63 +32,106 @@ const (
 	certfile = "/tmp/cert"
 )
 
-var (
-	opts = options.DefaultGrype(clio.Identification{
-		Name:    "cve",
-		Version: "5.0",
-	})
-)
+type Cve struct {
+	opts *options.Grype
+	m    sync.Mutex
+}
 
-func getProviderConfig(opts *options.Grype) pkg.ProviderConfig {
-	cfg := syft.DefaultCreateSBOMConfig()
-	cfg.Packages.JavaArchive.IncludeIndexedArchives = opts.Search.IncludeIndexedArchives
-	cfg.Packages.JavaArchive.IncludeUnindexedArchives = opts.Search.IncludeUnindexedArchives
-	cfg.Compliance.MissingVersion = cataloging.ComplianceActionDrop
+func New() (*Cve, error) {
+	_cve := &Cve{
+		opts: options.DefaultGrype(clio.Identification{
+			Name:    "cve",
+			Version: "5.0",
+		}),
+	}
+	go _cve.Update()
+	return _cve, nil
+}
 
+func (c *Cve) UpdateTicker() {
+	ticker := time.NewTicker(10 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		if err := c.Update(); err != nil {
+			log.Println(fmt.Errorf("failed to update cve db: %w", err))
+		}
+	}
+}
+
+func (c *Cve) getProviderConfig() pkg.ProviderConfig {
+	config := syft.DefaultCreateSBOMConfig()
+	config.Packages.JavaArchive.IncludeIndexedArchives = c.opts.Search.IncludeIndexedArchives
+	config.Packages.JavaArchive.IncludeUnindexedArchives = c.opts.Search.IncludeUnindexedArchives
+	config.Compliance.MissingVersion = cataloging.ComplianceActionDrop
 	return pkg.ProviderConfig{
 		SyftProviderConfig: pkg.SyftProviderConfig{
-			RegistryOptions:        opts.Registry.ToOptions(),
-			Exclusions:             opts.Exclusions,
-			SBOMOptions:            cfg,
-			Platform:               opts.Platform,
-			Name:                   opts.Name,
-			DefaultImagePullSource: opts.DefaultImagePullSource,
+			RegistryOptions:        c.opts.Registry.ToOptions(),
+			Exclusions:             c.opts.Exclusions,
+			SBOMOptions:            config,
+			Platform:               c.opts.Platform,
+			Name:                   c.opts.Name,
+			DefaultImagePullSource: c.opts.DefaultImagePullSource,
 		},
 		SynthesisConfig: pkg.SynthesisConfig{
-			GenerateMissingCPEs: opts.GenerateMissingCPEs,
+			GenerateMissingCPEs: c.opts.GenerateMissingCPEs,
 		},
 	}
 }
 
-func getMatchers(opts *options.Grype) []matcher.Matcher {
+func (c *Cve) getMatchers() []matcher.Matcher {
 	return matcher.NewDefaultMatchers(
 		matcher.Config{
 			Java: java.MatcherConfig{
-				ExternalSearchConfig: opts.ExternalSources.ToJavaMatcherConfig(),
-				UseCPEs:              opts.Match.Java.UseCPEs,
+				ExternalSearchConfig: c.opts.ExternalSources.ToJavaMatcherConfig(),
+				UseCPEs:              c.opts.Match.Java.UseCPEs,
 			},
-			Ruby:       ruby.MatcherConfig(opts.Match.Ruby),
-			Python:     python.MatcherConfig(opts.Match.Python),
-			Dotnet:     dotnet.MatcherConfig(opts.Match.Dotnet),
-			Javascript: javascript.MatcherConfig(opts.Match.Javascript),
+			Ruby:       ruby.MatcherConfig(c.opts.Match.Ruby),
+			Python:     python.MatcherConfig(c.opts.Match.Python),
+			Dotnet:     dotnet.MatcherConfig(c.opts.Match.Dotnet),
+			Javascript: javascript.MatcherConfig(c.opts.Match.Javascript),
 			Golang: golang.MatcherConfig{
-				UseCPEs:                                opts.Match.Golang.UseCPEs,
-				AlwaysUseCPEForStdlib:                  opts.Match.Golang.AlwaysUseCPEForStdlib,
-				AllowMainModulePseudoVersionComparison: opts.Match.Golang.AllowMainModulePseudoVersionComparison,
+				UseCPEs:                                c.opts.Match.Golang.UseCPEs,
+				AlwaysUseCPEForStdlib:                  c.opts.Match.Golang.AlwaysUseCPEForStdlib,
+				AllowMainModulePseudoVersionComparison: c.opts.Match.Golang.AllowMainModulePseudoVersionComparison,
 			},
-			Stock: stock.MatcherConfig(opts.Match.Stock),
+			Stock: stock.MatcherConfig(c.opts.Match.Stock),
 		},
 	)
 }
 
-func Get(input string) ([]byte, error) {
-	if err := Update(opts.DB); err != nil {
-		return nil, err
+func (c *Cve) Update() error {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	log.Println("start update task")
+
+	if err := http.SaveCAs([]string{
+		"https://toolbox-data.anchore.io",
+		"https://grype.anchore.io",
+	}, certfile); err != nil {
+		return fmt.Errorf("ca error: %w", err)
 	}
+	config := c.opts.DB.ToCuratorConfig()
+	config.RequireUpdateCheck = true
+	config.CACert = certfile
+
+	curator, err := distribution.NewCurator(config)
+	if err != nil {
+		return fmt.Errorf("failed to get curator: %w", err)
+	}
+	if _, err := curator.Update(); err != nil {
+		return fmt.Errorf("unable to update vulnerability database: %w", err)
+	}
+	return nil
+}
+
+func (c *Cve) Get(cvetype string, input string) ([]byte, error) {
+	c.m.Lock()
+	defer c.m.Unlock()
 
 	store, status, closer, err := grype.LoadVulnerabilityDB(
-		opts.DB.ToCuratorConfig(),
-		opts.DB.AutoUpdate,
+		c.opts.DB.ToCuratorConfig(),
+		c.opts.DB.AutoUpdate,
 	)
 
 	if err != nil {
@@ -93,20 +139,23 @@ func Get(input string) ([]byte, error) {
 	}
 	defer closer.Close()
 
-	packages, pkgcontext, sbomdata, err := pkg.Provide(input, getProviderConfig(opts))
+	packages, pkgcontext, sbomdata, err := pkg.Provide(
+		fmt.Sprintf("%s:%s", cvetype, input),
+		c.getProviderConfig(),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load source data for analyze: %w", err)
 	}
 
 	mathcer := grype.VulnerabilityMatcher{
 		Store:          *store,
-		IgnoreRules:    opts.Ignore,
-		NormalizeByCVE: opts.ByCVE,
-		FailSeverity:   opts.FailOnSeverity(),
-		Matchers:       getMatchers(opts),
+		IgnoreRules:    c.opts.Ignore,
+		NormalizeByCVE: c.opts.ByCVE,
+		FailSeverity:   c.opts.FailOnSeverity(),
+		Matchers:       c.getMatchers(),
 		VexProcessor: vex.NewProcessor(vex.ProcessorOptions{
-			Documents:   opts.VexDocuments,
-			IgnoreRules: opts.Ignore,
+			Documents:   c.opts.VexDocuments,
+			IgnoreRules: c.opts.Ignore,
 		}),
 	}
 
@@ -123,7 +172,7 @@ func Get(input string) ([]byte, error) {
 		Context:          pkgcontext,
 		MetadataProvider: store,
 		SBOM:             sbomdata,
-		AppConfig:        opts,
+		AppConfig:        c.opts,
 		DBStatus:         status,
 	}
 	var (
@@ -137,23 +186,51 @@ func Get(input string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func Update(opts options.Database) error {
-	if err := http.SaveCAs([]string{
-		"https://toolbox-data.anchore.io",
-		"https://grype.anchore.io",
-	}, certfile); err != nil {
-		return err
-	}
-	config := opts.ToCuratorConfig()
-	config.RequireUpdateCheck = true
-	config.CACert = certfile
+// var (
+// 	opts = options.DefaultGrype(clio.Identification{
+// 		Name:    "cve",
+// 		Version: "5.0",
+// 	})
+// )
 
-	curator, err := distribution.NewCurator(config)
-	if err != nil {
-		return fmt.Errorf("failed to get curator: %w", err)
-	}
-	if _, err := curator.Update(); err != nil {
-		return fmt.Errorf("unable to update vulnerability database: %w", err)
-	}
-	return nil
-}
+// func getProviderConfig(opts *options.Grype) pkg.ProviderConfig {
+// 	cfg := syft.DefaultCreateSBOMConfig()
+// 	cfg.Packages.JavaArchive.IncludeIndexedArchives = opts.Search.IncludeIndexedArchives
+// 	cfg.Packages.JavaArchive.IncludeUnindexedArchives = opts.Search.IncludeUnindexedArchives
+// 	cfg.Compliance.MissingVersion = cataloging.ComplianceActionDrop
+
+// 	return pkg.ProviderConfig{
+// 		SyftProviderConfig: pkg.SyftProviderConfig{
+// 			RegistryOptions:        opts.Registry.ToOptions(),
+// 			Exclusions:             opts.Exclusions,
+// 			SBOMOptions:            cfg,
+// 			Platform:               opts.Platform,
+// 			Name:                   opts.Name,
+// 			DefaultImagePullSource: opts.DefaultImagePullSource,
+// 		},
+// 		SynthesisConfig: pkg.SynthesisConfig{
+// 			GenerateMissingCPEs: opts.GenerateMissingCPEs,
+// 		},
+// 	}
+// }
+
+// func getMatchers(opts *options.Grype) []matcher.Matcher {
+// 	return matcher.NewDefaultMatchers(
+// 		matcher.Config{
+// 			Java: java.MatcherConfig{
+// 				ExternalSearchConfig: opts.ExternalSources.ToJavaMatcherConfig(),
+// 				UseCPEs:              opts.Match.Java.UseCPEs,
+// 			},
+// 			Ruby:       ruby.MatcherConfig(opts.Match.Ruby),
+// 			Python:     python.MatcherConfig(opts.Match.Python),
+// 			Dotnet:     dotnet.MatcherConfig(opts.Match.Dotnet),
+// 			Javascript: javascript.MatcherConfig(opts.Match.Javascript),
+// 			Golang: golang.MatcherConfig{
+// 				UseCPEs:                                opts.Match.Golang.UseCPEs,
+// 				AlwaysUseCPEForStdlib:                  opts.Match.Golang.AlwaysUseCPEForStdlib,
+// 				AllowMainModulePseudoVersionComparison: opts.Match.Golang.AllowMainModulePseudoVersionComparison,
+// 			},
+// 			Stock: stock.MatcherConfig(opts.Match.Stock),
+// 		},
+// 	)
+// }

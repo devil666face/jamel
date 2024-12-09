@@ -1,6 +1,7 @@
 package rmq
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -101,7 +102,7 @@ func (r *Rmq) Publish(queuename string, body []byte) error {
 	return nil
 }
 
-func (r *Rmq) Consume(queuename string, messagechan chan<- amqp.Delivery) error {
+func (r *Rmq) Consume(ctx context.Context, queuename string, messagechan chan<- amqp.Delivery) error {
 	queue, err := r.queueset.Get(queuename)
 	if err != nil {
 		return fmt.Errorf("get queue error: %w", err)
@@ -119,8 +120,17 @@ func (r *Rmq) Consume(queuename string, messagechan chan<- amqp.Delivery) error 
 		return fmt.Errorf("failed to get messages chan: %w", err)
 	}
 	go func() {
-		for msg := range msgs {
-			messagechan <- msg // Send the message to the channel
+		defer r.channel.Close()
+		for {
+			select {
+			case msg, ok := <-msgs:
+				if !ok {
+					return
+				}
+				messagechan <- msg
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 	return nil

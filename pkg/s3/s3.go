@@ -80,3 +80,10 @@ func (s *S3) Download(id string) (string, error) {
 	}
 	return id, nil
 }
+
+func (s *S3) Delete(id string) error {
+	if err := s.client.RemoveObject(context.Background(), s.bucket, id, minio.RemoveObjectOptions{}); err != nil {
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+	return nil
+}

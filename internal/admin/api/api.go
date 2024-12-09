@@ -62,6 +62,7 @@ func (a *Api) NewTaskFromFile(filename string) error {
 			Filename: file.Name(),
 			Size:     stat.Size(),
 			Chunk:    buf[:n],
+			TaskType: jamel.TaskType_DOCKER_ARCHIVE,
 		}); err != nil {
 			return fmt.Errorf("error to send file chunk via grpc: %w", err)
 		}
@@ -76,6 +77,8 @@ func (a *Api) NewTaskFromFile(filename string) error {
 	if err != nil {
 		return fmt.Errorf("error to get success request about uploading: %w", err)
 	}
-	fmt.Println(resp)
+	fmt.Println(resp.TaskId)
+	fmt.Println(resp.Report)
+	fmt.Println(resp.TaskType)
 	return nil
 }

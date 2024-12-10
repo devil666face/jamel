@@ -1,4 +1,30 @@
 services:
+  jamel-server:
+    image: git.codenrock.com:5050/5hm3l/jamel/jamel-server:latest
+    container_name: server
+    restart: unless-stopped
+    env_file: .server.sample.env
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./db:/app/db
+    depends_on:     
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  jamel-client:
+    image: git.codenrock.com:5050/5hm3l/jamel/jamel-client:latest
+    container_name: client
+    restart: unless-stopped
+    env_file: .client.sample.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -11,6 +37,11 @@ services:
     volumes:
       - ./rabbitmq:/var/lib/rabbitmq
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmqctl status || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   minio:
     image: minio/minio:latest
@@ -24,3 +55,8 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - ./minio:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

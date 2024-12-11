@@ -1,0 +1,20 @@
+stages:
+  - build
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  APP: "jamel"
+  CLIENT: "client"
+
+build-dev:
+  stage: build
+  services:
+    - docker:dind
+  image: docker:latest
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker info
+  script:
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_TAG-dev --env-file .client.sample.env -f Dockerfile.client .
+  tags:
+    - builder

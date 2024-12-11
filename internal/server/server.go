@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"jamel/gen/go/jamel"
 	"jamel/internal/server/grpc/handler"
+	"jamel/internal/server/service/models"
 	"jamel/pkg/queue"
 	"jamel/pkg/rmq"
 
@@ -20,7 +21,7 @@ type DB interface {
 }
 
 type Server struct {
-	db      DB
+	manager *models.Manager
 	s3      handler.S3
 	rmq     handler.Rmq
 	resulst handler.Queue
@@ -37,7 +38,7 @@ func Must(
 	_rmq handler.Rmq,
 ) *Server {
 	_server := &Server{
-		db:      _db,
+		manager: models.New(_db.DB()),
 		s3:      _s3,
 		rmq:     _rmq,
 		resulst: queue.New(),
@@ -56,6 +57,7 @@ func Must(
 func (s *Server) wrap(ctx *context.Context) *handler.Handler {
 	return handler.New(
 		ctx,
+		s.manager,
 		s.s3,
 		s.rmq,
 		s.resulst,

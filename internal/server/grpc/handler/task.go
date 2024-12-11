@@ -57,6 +57,13 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 	if err != nil {
 		return fmt.Errorf("failed to get resp from result queue: %w", err)
 	}
+
+	if err := h.manager.Task.Create(
+		h.manager.Task.NewTask(resp),
+	); err != nil {
+		return fmt.Errorf("failed to write resp in database: %w", err)
+	}
+
 	return stream.SendAndClose(
 		resp,
 	)

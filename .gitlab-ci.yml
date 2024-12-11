@@ -5,6 +5,7 @@ variables:
   DOCKER_TLS_CERTDIR: ""
   APP: "jamel"
   CLIENT: "client"
+  SERVER: "server"
 
 build-dev:
   stage: build
@@ -16,5 +17,8 @@ build-dev:
     - docker info
   script:
     - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_SHORT_SHA -f Dockerfile.client .
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER:$CI_COMMIT_SHORT_SHA -f Dockerfile.server .
+    - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER:$CI_COMMIT_SHORT_SHA
   tags:
     - builder

@@ -1,0 +1,28 @@
+stages:
+  - build
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  APP: "jamel"
+  CLIENT: "client"
+  SERVER: "server"
+
+build-dev:
+  stage: build
+  services:
+    - docker:dind
+  image: docker:latest
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker info
+  script:
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_SHORT_SHA
+      -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:dev -f Dockerfile.client .
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER:$CI_COMMIT_SHORT_SHA
+      -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER:dev  -f Dockerfile.server .
+    - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT --all-tags
+    - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER --all-tags
+  tags:
+    - builder
+  only:
+    - dev

@@ -4,13 +4,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"log"
-	"os"
 
 	_ "embed"
 
 	"jamel/internal/admin"
 	"jamel/internal/admin/config"
+	"jamel/internal/admin/view"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -44,9 +43,13 @@ func main() {
 		_config.Password,
 		conn,
 	)
-	if err := _admin.NewTaskFromFile(os.Args[1]); err != nil {
-		log.Fatalln(err)
-	}
+	_view := view.New(
+		_admin,
+	)
+	_view.Run()
+
+	// if err := _admin.NewTaskFromFile(os.Args[1]); err != nil {
+	// }
 }
 
 func loadTLSCreds() (credentials.TransportCredentials, error) {

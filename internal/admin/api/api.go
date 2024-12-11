@@ -34,7 +34,7 @@ func New(
 	}
 }
 
-func (a *Api) NewTaskFromFile(filename string) error {
+func (a *Api) NewTaskFromFile(filename string, tasktype jamel.TaskType) error {
 	var (
 		sent int
 		_p   int
@@ -62,7 +62,7 @@ func (a *Api) NewTaskFromFile(filename string) error {
 			Filename: file.Name(),
 			Size:     stat.Size(),
 			Chunk:    buf[:n],
-			TaskType: jamel.TaskType_DOCKER_ARCHIVE,
+			TaskType: tasktype,
 		}); err != nil {
 			return fmt.Errorf("error to send file chunk via grpc: %w", err)
 		}

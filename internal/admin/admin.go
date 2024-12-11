@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"jamel/gen/go/jamel"
 	"jamel/internal/admin/api"
 
 	"google.golang.org/grpc"
@@ -22,6 +23,6 @@ func Must(
 	}
 }
 
-func (a *Admin) NewTaskFromFile(filename string) error {
-	return a.client.NewTaskFromFile(filename)
+func (a *Admin) NewTaskFromFile(filename string, tasktype jamel.TaskType) error {
+	return a.client.NewTaskFromFile(filename, tasktype)
 }

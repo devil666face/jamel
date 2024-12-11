@@ -75,7 +75,9 @@ check-admin:
   script:
     - chmod +x ./test.sh && chmod +x ./bin/jamel-admin
     - docker-compose -f docker-compose.dev.yaml up -d
-    - ./test.sh
+    - for i in {0..20}; do
+      ./bin/jamel-admin ubuntu.tar &
+      done
   dependencies:
     - build-admin
   tags:

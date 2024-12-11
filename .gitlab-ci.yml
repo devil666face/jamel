@@ -74,7 +74,7 @@ check-admin:
     - docker save -o ubuntu.tar ubuntu:latest
   script:
     - chmod +x ./test.sh && chmod +x ./bin/jamel-admin
-    - docker-compose -f docker-compose.dev.yaml -d
+    - docker-compose -f docker-compose.dev.yaml up -d
     - ./test.sh
   dependencies:
     - build-admin

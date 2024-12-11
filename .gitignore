@@ -8,3 +8,7 @@
 /ubuntu.tar
 /rabbitmq
 /minio
+.env
+.admin.env
+.server.env
+.client.env

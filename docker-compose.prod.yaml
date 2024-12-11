@@ -3,7 +3,7 @@ services:
     image: git.codenrock.com:5050/5hm3l/jamel/jamel-server:latest
     container_name: server
     restart: unless-stopped
-    env_file: .server.sample.env
+    env_file: .server.env
     ports:
       - "8443:8443"
     volumes:
@@ -18,7 +18,7 @@ services:
     image: git.codenrock.com:5050/5hm3l/jamel/jamel-client:latest
     container_name: client
     restart: unless-stopped
-    env_file: .client.sample.env
+    env_file: .client.env
     depends_on:
       rabbitmq:
         condition: service_healthy

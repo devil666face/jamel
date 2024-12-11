@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"jamel/gen/go/jamel"
+	"jamel/internal/server/service/models"
 	"time"
 
 	"github.com/streadway/amqp"
@@ -29,6 +30,7 @@ type Queue interface {
 
 type Handler struct {
 	ctx     *context.Context
+	manager *models.Manager
 	s3      S3
 	rmq     Rmq
 	results Queue
@@ -36,12 +38,14 @@ type Handler struct {
 
 func New(
 	_ctx *context.Context,
+	_manager *models.Manager,
 	_s3 S3,
 	_rmq Rmq,
 	_results Queue,
 ) *Handler {
 	h := &Handler{
 		ctx:     _ctx,
+		manager: _manager,
 		s3:      _s3,
 		rmq:     _rmq,
 		results: _results,

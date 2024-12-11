@@ -1,8 +1,9 @@
 package models
 
 import (
-	"jamel/gen/go/jamel"
 	"time"
+
+	"jamel/gen/go/jamel"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -18,11 +19,13 @@ type Base struct {
 type Task struct {
 	Base
 	Filename string
+	Report   string
 	TaskType jamel.TaskType
 }
 
 func (t *Task) BeforeCreate(tx *gorm.DB) (err error) {
-	t.ID = uuid.NewString()
+	if t.ID == "" {
+		t.ID = uuid.NewString()
+	}
 	return
-	// return tx.SetColumn("ID", uuid.String())
 }

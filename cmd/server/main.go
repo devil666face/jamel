@@ -14,7 +14,9 @@ import (
 	"jamel/internal/server"
 	"jamel/internal/server/config"
 	"jamel/internal/server/grpc/handler"
+	"jamel/internal/server/service/models"
 	"jamel/internal/server/service/store"
+
 	"jamel/pkg/rmq"
 	"jamel/pkg/s3"
 
@@ -49,7 +51,7 @@ func main() {
 	_config := config.Must()
 	_store := store.Must(
 		_config.SqliteDB,
-		[]any{},
+		[]any{&models.Task{}},
 	)
 	_s3, err := s3.New(
 		_config.S3Conntect,

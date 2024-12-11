@@ -77,4 +77,6 @@ check-admin:
     - ./test.sh
   dependencies:
     - build-admin
+  tags:
+    - builder
   

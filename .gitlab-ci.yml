@@ -15,6 +15,6 @@ build-dev:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
   script:
-    - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_TAG -f Dockerfile.client .
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_SHORT_SHA -f Dockerfile.client .
   tags:
     - builder

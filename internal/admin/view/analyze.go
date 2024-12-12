@@ -1,7 +1,6 @@
 package view
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -27,14 +26,23 @@ var (
 
 func analyzeCommands() []string {
 	var commands = []string{}
-	for cmd, _ := range analyzeMap {
+	for cmd := range analyzeMap {
 		commands = append(commands, cmd)
 	}
 	return commands
 }
 
 func (v *View) analyzeAction(cmd string, filename string) {
-	out, err := v.admin.NewTaskFromFile(filename, analyzeMap[cmd])
+	var (
+		out string
+		err error
+	)
+	switch analyzeMap[cmd] {
+	case jamel.TaskType_DOCKER:
+		out, err = v.admin.NewTaskFromImage(filename)
+	default:
+		out, err = v.admin.NewTaskFromFile(filename, analyzeMap[cmd])
+	}
 	if err != nil {
 		ErrorFunc(err)
 		return
@@ -99,56 +107,47 @@ func (v *View) analyzeCompleter(d prompt.Document) []prompt.Suggest {
 }
 
 func (v *View) dockerSuggestion(query string) {
-	var s = strings.Fields(strings.TrimSpace(query))
-	if len(s) == 0 {
+	query = strings.TrimSpace(query)
+	if query == "" {
 		return
 	}
-	query = s[0]
-	if strings.Contains(query, ":") {
-		var (
-			err           error
-			tags, suggest = []string{}, []string{}
-			s             = strings.Split(query, ":")
-		)
-		if len(s) == 0 {
+
+	var (
+		parts = strings.SplitN(query, ":", 2)
+		image = parts[0]
+	)
+
+	if len(parts) > 1 {
+		tags, err := fetchTags(image)
+		if err != nil {
 			return
 		}
-		var (
-			image = s[0]
-			name  = strings.Split(image, "/")
-		)
 
-		switch len(name) {
-		case 1:
-			tags, err = hub.SearchDockerHubImageTags(name[0])
-			if errors.Is(err, hub.ErrTooManyRequests) {
-				return
-			}
-			if err != nil {
-				ErrorFunc(err)
-			}
-		case 2:
-			tags, err = hub.SearchDockerHubImageTags(name[1], name[0])
-			if errors.Is(err, hub.ErrTooManyRequests) {
-				return
-			}
-			if err != nil {
-				ErrorFunc(err)
-			}
-		}
-		for _, t := range tags {
-			suggest = append(suggest, fmt.Sprintf("%s%s", query, t))
+		suggest := make([]string, len(tags))
+		for i, t := range tags {
+			suggest[i] = fmt.Sprintf("%s:%s", image, t)
 		}
 		v.dockerComplete = suggest
 		return
-	} else {
-		images, err := hub.SearchDockerHubImages(query)
-		if errors.Is(err, hub.ErrTooManyRequests) {
-			return
-		}
-		if err != nil {
-			ErrorFunc(err)
-		}
-		v.dockerComplete = images
+	}
+
+	// Query does not contain a colon
+	images, err := hub.SearchDockerHubImages(image)
+	if err != nil {
+		return
+	}
+	v.dockerComplete = images
+}
+
+func fetchTags(image string) ([]string, error) {
+	var parts = strings.Split(image, "/")
+
+	switch len(parts) {
+	case 1:
+		return hub.SearchDockerHubImageTags(parts[0])
+	case 2:
+		return hub.SearchDockerHubImageTags(parts[1], parts[0])
+	default:
+		return nil, nil
 	}
 }

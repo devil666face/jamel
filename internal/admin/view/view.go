@@ -29,8 +29,11 @@ const (
 	Sbom          = "sbom"
 )
 
-var ErrorFunc func(err error) = func(err error) {
-	fmt.Print("⚠️ " + err.Error() + "\r\n")
+func ErrorFunc(err error, pre ...string) {
+	if len(pre) == 0 {
+		pre = append(pre, "")
+	}
+	fmt.Printf("\r%s⚠️ %s\r\n", pre[0], err)
 }
 
 var NotFoundFunc func() = func() {

@@ -34,6 +34,13 @@ func New(
 	}
 }
 
+func (a *Api) NewTaskFromImage(image string) (*jamel.TaskResponse, error) {
+	return a.client.NewTaskFromImage(a.ctx, &jamel.TaskRequest{
+		Filename: image,
+		TaskType: jamel.TaskType_DOCKER,
+	})
+}
+
 func (a *Api) NewTaskFromFile(filename string, tasktype jamel.TaskType) (*jamel.TaskResponse, error) {
 	var (
 		sent int

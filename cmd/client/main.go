@@ -42,6 +42,7 @@ func main() {
 		_cve,
 	)
 	for {
+		log.Println("loop started")
 		if err := _client.Run(); err != nil {
 			log.Printf("critical queue runtime error: %v", err)
 		}

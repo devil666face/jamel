@@ -33,7 +33,7 @@ func (q *Queue) Get(id string) (*jamel.TaskResponse, error) {
 	if !ok {
 		return nil, ErrNotFound
 	}
-	// delete(q.s, id)
+	delete(q.s, id)
 	return resp, nil
 }
 

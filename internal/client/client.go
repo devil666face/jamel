@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	"jamel/gen/go/jamel"
@@ -52,14 +51,7 @@ var TaskTypeMap = map[jamel.TaskType]string{
 	jamel.TaskType_SBOM:           "sbom",
 }
 
-func (c *Client) Reconnect() error {
-	return c.rmq.Connect()
-}
-
 func (c *Client) Run() error {
-	log.Println("loop started")
-	defer log.Println("loop stopped")
-
 	var (
 		taskch      = make(chan amqp.Delivery)
 		errch       = make(chan error)
@@ -76,31 +68,27 @@ func (c *Client) Run() error {
 	go func() {
 		for data := range taskch {
 			func() {
-				var task = jamel.TaskResponse{}
+				var (
+					task = jamel.TaskResponse{}
+					err  error
+				)
 				if err := json.Unmarshal(data.Body, &task); err != nil {
 					errch <- fmt.Errorf("unmarshal task from queue error: %w", err)
 					return
 				}
-				if _, err := c.s3.Download(task.TaskId); err != nil {
-					errch <- fmt.Errorf("download from s3 error: %w", err)
-					return
-				}
-				defer func() {
-					if err := os.Remove(task.TaskId); err != nil {
-						// errch <- fmt.Errorf("failed to remove: %w", err)
-						return
+				switch task.TaskType {
+				case jamel.TaskType_DOCKER:
+					if task.Report, err = c.NewTaskFromImage(&task); err != nil {
+						task.Error = err.Error()
 					}
-				}()
-				out, err := c.cve.Get(TaskTypeMap[task.TaskType], task.TaskId)
-				if err != nil {
-					errch <- fmt.Errorf("getting cves error: %w", err)
-					return
+				default:
+					if task.Report, err = c.NewTaskFromFile(&task); err != nil {
+						task.Error = err.Error()
+					}
 				}
-				task.Report = string(out)
 				data, err := json.Marshal(&task)
 				if err != nil {
-					errch <- fmt.Errorf("failed to marshal result before set in queue: %w", err)
-					return
+					task.Error = fmt.Errorf("failed to marshal result before set in queue: %w", err).Error()
 				}
 				if err := c.rmq.Publish(rmq.ResultQueue, data); err != nil {
 					errch <- fmt.Errorf("failed to set in result queue: %w", err)
@@ -117,4 +105,32 @@ func (c *Client) Run() error {
 		}
 	}
 	return nil
+}
+
+func (c *Client) NewTaskFromFile(task *jamel.TaskResponse) (string, error) {
+	if _, err := c.s3.Download(task.TaskId); err != nil {
+		return "", fmt.Errorf("download from s3 error: %w", err)
+	}
+	defer func() {
+		if err := os.Remove(task.TaskId); err != nil {
+			return
+		}
+	}()
+	out, err := c.cve.Get(TaskTypeMap[task.TaskType], task.TaskId)
+	if err != nil {
+		return "", fmt.Errorf("getting cves error: %w", err)
+	}
+	return string(out), nil
+}
+
+func (c *Client) NewTaskFromImage(task *jamel.TaskResponse) (string, error) {
+	out, err := c.cve.Get(TaskTypeMap[task.TaskType], task.Name)
+	if err != nil {
+		return "", fmt.Errorf("getting cves error: %w", err)
+	}
+	return string(out), nil
+}
+
+func (c *Client) Reconnect() error {
+	return c.rmq.Connect()
 }

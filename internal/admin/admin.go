@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"errors"
 	"fmt"
 	"jamel/gen/go/jamel"
 	"jamel/internal/admin/api"
@@ -10,7 +11,7 @@ import (
 )
 
 type Admin struct {
-	client *api.Api
+	Client *api.Api
 }
 
 func Must(
@@ -18,21 +19,37 @@ func Must(
 	conn *grpc.ClientConn,
 ) *Admin {
 	return &Admin{
-		client: api.New(
+		Client: api.New(
 			username, passowrd,
 			conn,
 		),
 	}
 }
+func (a *Admin) NewTaskFromImage(image string) (string, error) {
+	return a.newTask(func() (*jamel.TaskResponse, error) {
+		return a.Client.NewTaskFromImage(image)
+	})
+}
 
 func (a *Admin) NewTaskFromFile(filename string, tasktype jamel.TaskType) (string, error) {
-	resp, err := a.client.NewTaskFromFile(filename, tasktype)
+	return a.newTask(func() (*jamel.TaskResponse, error) {
+		return a.Client.NewTaskFromFile(filename, tasktype)
+	})
+}
+
+func (a *Admin) newTask(taskFunc func() (*jamel.TaskResponse, error)) (string, error) {
+	resp, err := taskFunc()
 	if err != nil {
 		return "", err
 	}
+	if resp.Error != "" {
+		return "", errors.New(resp.Error)
+	}
+	return formatTaskResponse(resp), nil
+}
+
+func formatTaskResponse(resp *jamel.TaskResponse) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintln(resp.TaskId))
-	sb.WriteString(fmt.Sprintln(resp.Filename))
-	sb.WriteString(fmt.Sprintln(resp.Report))
-	return sb.String(), nil
+	fmt.Fprintf(&sb, "\r%s\n%s\n%s\n", resp.TaskId, resp.Name, resp.Report)
+	return sb.String()
 }

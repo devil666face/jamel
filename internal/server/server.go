@@ -80,6 +80,12 @@ func (s *Server) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServer
 		NewTaskFromFile(stream)
 }
 
+func (s *Server) NewTaskFromImage(ctx context.Context, request *jamel.TaskRequest) (*jamel.TaskResponse, error) {
+	return s.
+		wrap(&ctx).
+		NewTaskFromImage(request)
+}
+
 func (s *Server) ResponseQueueHandler() error {
 	var (
 		respch      = make(chan amqp.Delivery)
@@ -103,16 +109,22 @@ func (s *Server) ResponseQueueHandler() error {
 				continue
 			}
 			s.resulst.Set(&resp)
-			if err := s.s3.Delete(resp.TaskId); err != nil {
-				errch <- fmt.Errorf("failed to delete obj from s3: %w", err)
+
+			switch resp.TaskType {
+			case jamel.TaskType_DOCKER:
 				continue
+			default:
+				if err := s.s3.Delete(resp.TaskId); err != nil {
+					errch <- fmt.Errorf("failed to delete obj from s3: %w", err)
+					continue
+				}
 			}
 		}
 	}()
 
 	for err := range errch {
 		if err != nil {
-			cancel()
+			// cancel()
 			return fmt.Errorf("resp queue error: %w", err)
 		}
 	}

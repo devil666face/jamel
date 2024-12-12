@@ -12,6 +12,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+const bufSize = 1024
+
 type Api struct {
 	md     metadata.MD
 	ctx    context.Context
@@ -55,7 +57,7 @@ func (a *Api) NewTaskFromFile(filename string, tasktype jamel.TaskType) (*jamel.
 	if err != nil {
 		return nil, fmt.Errorf("error to start upload stream: %w", err)
 	}
-	buf := make([]byte, 1024)
+	buf := make([]byte, bufSize)
 	for {
 		n, err := file.Read(buf)
 		if err == io.EOF {
@@ -75,7 +77,7 @@ func (a *Api) NewTaskFromFile(filename string, tasktype jamel.TaskType) (*jamel.
 		}
 		sent += len(buf)
 		percent := int(float64(sent) / float64(stat.Size()) * 100)
-		if _p != percent {
+		if (_p != percent) && (stat.Size() > bufSize) {
 			fmt.Printf("\r➡️ uploading %s %d%%\r", file.Name(), percent)
 		}
 		_p = percent

@@ -20,6 +20,8 @@ type Task struct {
 	Base
 	Name     string
 	Report   string
+	Json     string
+	Sbom     string
 	TaskType jamel.TaskType
 }
 

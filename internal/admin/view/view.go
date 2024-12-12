@@ -24,8 +24,6 @@ const (
 const (
 	Docker        = "docker"
 	DockerArchive = "archive-docker"
-	Dir           = "dir"
-	File          = "file"
 	Sbom          = "sbom"
 )
 

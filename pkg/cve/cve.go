@@ -1,7 +1,6 @@
 package cve
 
 import (
-	"bytes"
 	"fmt"
 	"jamel/pkg/http"
 	"log"
@@ -22,7 +21,6 @@ import (
 	"github.com/anchore/grype/grype/matcher/stock"
 	"github.com/anchore/grype/grype/pkg"
 	"github.com/anchore/grype/grype/presenter/models"
-	"github.com/anchore/grype/grype/presenter/table"
 	"github.com/anchore/grype/grype/vex"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cataloging"
@@ -127,7 +125,13 @@ func (c *Cve) Update() error {
 	return nil
 }
 
-func (c *Cve) Get(cvetype string, input string) ([]byte, error) {
+func (c *Cve) GetUnwrap(cvetype string, input string) (string, string, string, error) {
+	report, err := c.Get(cvetype, input)
+	_table, _json, _sbom := report.Get()
+	return _table, _json, _sbom, err
+}
+
+func (c *Cve) Get(cvetype string, input string) (Report, error) {
 	c.m.Lock()
 	defer c.m.Unlock()
 
@@ -137,7 +141,7 @@ func (c *Cve) Get(cvetype string, input string) ([]byte, error) {
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to load vulnerability db: %w", err)
+		return Report{}, fmt.Errorf("failed to load vulnerability db: %w", err)
 	}
 	defer closer.Close()
 
@@ -146,7 +150,7 @@ func (c *Cve) Get(cvetype string, input string) ([]byte, error) {
 		c.getProviderConfig(),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load source data for analyze: %w", err)
+		return Report{}, fmt.Errorf("failed to load source data for analyze: %w", err)
 	}
 
 	mathcer := grype.VulnerabilityMatcher{
@@ -163,7 +167,7 @@ func (c *Cve) Get(cvetype string, input string) ([]byte, error) {
 
 	remaining, ignored, err := mathcer.FindMatches(packages, pkgcontext)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find matches: %w", err)
+		return Report{}, fmt.Errorf("failed to find matches: %w", err)
 	}
 
 	model := models.PresenterConfig{
@@ -177,15 +181,10 @@ func (c *Cve) Get(cvetype string, input string) ([]byte, error) {
 		AppConfig:        c.opts,
 		DBStatus:         status,
 	}
-	var (
-		buf  bytes.Buffer
-		pres = table.NewPresenter(model, false)
-		// pres = json.NewPresenter(model)
+	return newReport(
+		model,
+		sbomdata,
 	)
-	if err := pres.Present(&buf); err != nil {
-		return nil, fmt.Errorf("failed to write result in buf: %w", err)
-	}
-	return buf.Bytes(), nil
 }
 
 // var (

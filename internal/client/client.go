@@ -77,11 +77,11 @@ func (c *Client) Run() error {
 				}
 				switch resp.TaskType {
 				case jamel.TaskType_DOCKER:
-					if resp.Json, resp.Report, resp.Sbom, err = c.NewTaskFromImage(&resp); err != nil {
+					if resp.Report, resp.Json, resp.Sbom, err = c.NewTaskFromImage(&resp); err != nil {
 						resp.Error = err.Error()
 					}
 				default:
-					if resp.Json, resp.Report, resp.Sbom, err = c.NewTaskFromFile(&resp); err != nil {
+					if resp.Report, resp.Json, resp.Sbom, err = c.NewTaskFromFile(&resp); err != nil {
 						resp.Error = err.Error()
 					}
 				}

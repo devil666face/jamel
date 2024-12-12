@@ -26,13 +26,13 @@ func newReport(
 	sbomdata *sbom.SBOM,
 ) (Report, error) {
 	var err error
-	_json, err := presToJson(model)
-	if err != nil {
-		err = fmt.Errorf("failed to write result in json: %w", err)
-	}
 	_table, err := presToTable(model)
 	if err != nil {
 		err = fmt.Errorf("failed to write result in table: %w", err)
+	}
+	_json, err := presToJson(model)
+	if err != nil {
+		err = fmt.Errorf("failed to write result in json: %w", err)
 	}
 	_sbom, err := format.Encode(*sbomdata, syftjson.NewFormatEncoder())
 	if err != nil {
@@ -59,12 +59,12 @@ func present(pres Presenter) ([]byte, error) {
 
 func presToTable(model models.PresenterConfig) ([]byte, error) {
 	return present(
-		json.NewPresenter(model),
+		table.NewPresenter(model, false),
 	)
 }
 
 func presToJson(model models.PresenterConfig) ([]byte, error) {
 	return present(
-		table.NewPresenter(model, false),
+		json.NewPresenter(model),
 	)
 }

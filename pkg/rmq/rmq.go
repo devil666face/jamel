@@ -127,7 +127,7 @@ func (r *Rmq) Publish(queuename string, body []byte) error {
 	); err != nil {
 		return fmt.Errorf("publish error: %w", err)
 	}
-	log.Printf("set in %s: %v\n", queuename, string(body))
+	log.Printf("set in %s\n", queuename)
 	return nil
 }
 
@@ -156,7 +156,7 @@ func (r *Rmq) Consume(ctx context.Context, queuename string, messagechan chan<- 
 				if !ok {
 					return
 				}
-				log.Printf("get from %s: %v\n", queuename, string(msg.Body))
+				log.Printf("get from %s\n", queuename)
 				messagechan <- msg
 			case <-ctx.Done():
 				return

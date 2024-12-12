@@ -36,6 +36,8 @@ func (h *Handler) NewTaskFromImage(request *jamel.TaskRequest) (*jamel.TaskRespo
 	); err != nil {
 		return nil, fmt.Errorf("failed to write resp in database: %w", err)
 	}
+	resp.Json = ""
+	resp.Sbom = ""
 	return resp, nil
 }
 
@@ -91,6 +93,8 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 		return fmt.Errorf("failed to write resp in database: %w", err)
 	}
 
+	resp.Json = ""
+	resp.Sbom = ""
 	return stream.SendAndClose(
 		resp,
 	)

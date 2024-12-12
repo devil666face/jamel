@@ -1,6 +1,7 @@
 stages:
   - build
   - test
+  - deploy
 
 variables:
   DOCKER_TLS_CERTDIR: ""
@@ -82,4 +83,19 @@ check-admin:
     - build-admin
   tags:
     - builder
-  
+
+deploy-dev:
+  stage: deploy
+  services:
+    - docker:dind
+  image: docker:latest
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker info
+  script:
+    - docker-compose -f docker-compose.dev.yaml pull
+    - docker-compose -f docker-compose.dev.yaml up -d
+  dependencies:
+    - check-admin
+  tags:
+    - jamel-dev

@@ -48,8 +48,9 @@ func (d *database) connect() error {
 func (d *database) sqlite() error {
 	var err error
 	if d.db, err = gorm.Open(sqlite.Open(d.sqlitec+"?cache=shared&mode=rwc&_busy_timeout=50000"), &gorm.Config{
-		NowFunc:        func() time.Time { return time.Now().Local() },
-		Logger:         logger.Default.LogMode(logger.Info),
+		NowFunc: func() time.Time { return time.Now().Local() },
+		// Logger:         logger.Default.LogMode(logger.Info),
+		Logger:         logger.Default.LogMode(logger.Silent),
 		TranslateError: true,
 	}); err != nil {
 		return err

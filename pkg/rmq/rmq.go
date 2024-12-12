@@ -3,6 +3,7 @@ package rmq
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/streadway/amqp"
@@ -34,33 +35,58 @@ func (q *queueset) Get(name string) (amqp.Queue, error) {
 	return queue, nil
 }
 
+func (q *queueset) Delete() {
+	q.s.Lock()
+	defer q.s.Unlock()
+	for key := range q.set {
+		delete(q.set, key)
+	}
+}
+
 type Rmq struct {
 	conn     *amqp.Connection
 	channel  *amqp.Channel
 	queueset queueset
+
+	username, password, connect string
+	queue                       []string
 }
 
 func New(
-	connect string,
-	username, password string,
-	queue ...string,
-) (_rmq *Rmq, err error) {
-	if len(queue) == 0 {
+	_connect string,
+	_username, _password string,
+	_queue ...string,
+) (*Rmq, error) {
+	if len(_queue) == 0 {
 		return nil, fmt.Errorf("compile error: queue names not set")
 	}
-	_rmq = &Rmq{
+	_rmq := &Rmq{
 		queueset: queueset{set: make(map[string]amqp.Queue)},
+		username: _username,
+		password: _password,
+		connect:  _connect,
+		queue:    _queue,
 	}
-	_rmq.conn, err = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s/", username, password, connect))
+	if err := _rmq.Connect(); err != nil {
+		return nil, fmt.Errorf("connect error: %w", err)
+	}
+	return _rmq, nil
+}
+
+func (r *Rmq) Connect() error {
+	var err error
+	r.conn, err = amqp.Dial(
+		fmt.Sprintf("amqp://%s:%s@%s/", r.username, r.password, r.connect),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to amqp connect: %w", err)
+		return fmt.Errorf("failed to amqp connect: %w", err)
 	}
-	_rmq.channel, err = _rmq.conn.Channel()
+	r.channel, err = r.conn.Channel()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get channel: %w", err)
+		return fmt.Errorf("failed to get channel: %w", err)
 	}
-	for _, name := range queue {
-		queue, err := _rmq.channel.QueueDeclare(
+	for _, name := range r.queue {
+		queue, err := r.channel.QueueDeclare(
 			name,  // Queue name
 			true,  // Durable
 			false, // Delete when unused
@@ -69,17 +95,19 @@ func New(
 			nil,   // Arguments
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to make queue: %w", err)
+			return fmt.Errorf("failed to make queue: %w", err)
 		}
-		_rmq.queueset.Set(name, queue)
+		r.queueset.Set(name, queue)
 	}
-	return _rmq, nil
+	return nil
 }
 
-func (r *Rmq) Close() (err error) {
-	err = r.conn.Close()
-	err = r.channel.Close()
-	return
+func (r *Rmq) Close() error {
+	r.queueset.Delete()
+	if err := r.channel.Close(); err != nil {
+		return fmt.Errorf("failed to close: %w", err)
+	}
+	return nil
 }
 
 func (r *Rmq) Publish(queuename string, body []byte) error {
@@ -99,6 +127,7 @@ func (r *Rmq) Publish(queuename string, body []byte) error {
 	); err != nil {
 		return fmt.Errorf("publish error: %w", err)
 	}
+	log.Printf("set in %s: %v\n", queuename, string(body))
 	return nil
 }
 
@@ -120,13 +149,14 @@ func (r *Rmq) Consume(ctx context.Context, queuename string, messagechan chan<- 
 		return fmt.Errorf("failed to get messages chan: %w", err)
 	}
 	go func() {
-		defer r.channel.Close()
+		defer r.Close()
 		for {
 			select {
 			case msg, ok := <-msgs:
 				if !ok {
 					return
 				}
+				log.Printf("get from %s: %v\n", queuename, string(msg.Body))
 				messagechan <- msg
 			case <-ctx.Done():
 				return

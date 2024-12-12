@@ -59,7 +59,7 @@ func (q *Queue) WaitResp(id string, timeoutsec ...time.Duration) (*jamel.TaskRes
 		default:
 			resp, err := q.Get(id)
 			if errors.Is(err, ErrNotFound) {
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(busyWait)
 				continue
 			}
 			return resp, err

@@ -45,6 +45,7 @@ func New() (*Cve, error) {
 		}),
 	}
 	go _cve.Update()
+	go _cve.UpdateTicker()
 	return _cve, nil
 }
 

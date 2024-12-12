@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	JamelService_NewTaskFromFile_FullMethodName = "/jamel.JamelService/NewTaskFromFile"
+	JamelService_NewTaskFromFile_FullMethodName  = "/jamel.JamelService/NewTaskFromFile"
+	JamelService_NewTaskFromImage_FullMethodName = "/jamel.JamelService/NewTaskFromImage"
 )
 
 // JamelServiceClient is the client API for JamelService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type JamelServiceClient interface {
 	NewTaskFromFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[TaskRequest, TaskResponse], error)
+	NewTaskFromImage(ctx context.Context, in *TaskRequest, opts ...grpc.CallOption) (*TaskResponse, error)
 }
 
 type jamelServiceClient struct {
@@ -50,11 +52,22 @@ func (c *jamelServiceClient) NewTaskFromFile(ctx context.Context, opts ...grpc.C
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type JamelService_NewTaskFromFileClient = grpc.ClientStreamingClient[TaskRequest, TaskResponse]
 
+func (c *jamelServiceClient) NewTaskFromImage(ctx context.Context, in *TaskRequest, opts ...grpc.CallOption) (*TaskResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TaskResponse)
+	err := c.cc.Invoke(ctx, JamelService_NewTaskFromImage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // JamelServiceServer is the server API for JamelService service.
 // All implementations must embed UnimplementedJamelServiceServer
 // for forward compatibility.
 type JamelServiceServer interface {
 	NewTaskFromFile(grpc.ClientStreamingServer[TaskRequest, TaskResponse]) error
+	NewTaskFromImage(context.Context, *TaskRequest) (*TaskResponse, error)
 	mustEmbedUnimplementedJamelServiceServer()
 }
 
@@ -67,6 +80,9 @@ type UnimplementedJamelServiceServer struct{}
 
 func (UnimplementedJamelServiceServer) NewTaskFromFile(grpc.ClientStreamingServer[TaskRequest, TaskResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method NewTaskFromFile not implemented")
+}
+func (UnimplementedJamelServiceServer) NewTaskFromImage(context.Context, *TaskRequest) (*TaskResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewTaskFromImage not implemented")
 }
 func (UnimplementedJamelServiceServer) mustEmbedUnimplementedJamelServiceServer() {}
 func (UnimplementedJamelServiceServer) testEmbeddedByValue()                      {}
@@ -96,13 +112,36 @@ func _JamelService_NewTaskFromFile_Handler(srv interface{}, stream grpc.ServerSt
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type JamelService_NewTaskFromFileServer = grpc.ClientStreamingServer[TaskRequest, TaskResponse]
 
+func _JamelService_NewTaskFromImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(JamelServiceServer).NewTaskFromImage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: JamelService_NewTaskFromImage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(JamelServiceServer).NewTaskFromImage(ctx, req.(*TaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // JamelService_ServiceDesc is the grpc.ServiceDesc for JamelService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var JamelService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "jamel.JamelService",
 	HandlerType: (*JamelServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "NewTaskFromImage",
+			Handler:    _JamelService_NewTaskFromImage_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "NewTaskFromFile",

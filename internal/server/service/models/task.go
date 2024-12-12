@@ -18,7 +18,7 @@ type Base struct {
 
 type Task struct {
 	Base
-	Filename string
+	Name     string
 	Report   string
 	TaskType jamel.TaskType
 }

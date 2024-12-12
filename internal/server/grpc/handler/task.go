@@ -12,6 +12,33 @@ import (
 	"github.com/google/uuid"
 )
 
+func (h *Handler) NewTaskFromImage(request *jamel.TaskRequest) (*jamel.TaskResponse, error) {
+	var resp = &jamel.TaskResponse{
+		TaskId:   uuid.NewString(),
+		Name:     request.Filename,
+		TaskType: jamel.TaskType_DOCKER,
+	}
+	data, err := json.Marshal(&resp)
+	if err != nil {
+		return nil, fmt.Errorf("falied to serialize in json: %w", err)
+	}
+	if err := h.rmq.Publish(rmq.TaskQueue, data); err != nil {
+		return nil, fmt.Errorf("failed to set task in queue: %w", err)
+	}
+
+	resp, err = h.results.WaitResp(resp.TaskId, 120)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get resp from result queue: %w", err)
+	}
+
+	if err := h.manager.Task.Create(
+		h.manager.Task.NewTask(resp),
+	); err != nil {
+		return nil, fmt.Errorf("failed to write resp in database: %w", err)
+	}
+	return resp, nil
+}
+
 func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServer) error {
 	var (
 		received int64
@@ -23,7 +50,6 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 		return fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
-	defer os.Remove(temp)
 	for {
 		task, err := stream.Recv()
 		if err != nil {
@@ -35,7 +61,7 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 		received += int64(len(task.Chunk))
 		if received == task.Size {
 			resp.TaskType = task.TaskType
-			resp.Filename = task.Filename
+			resp.Name = task.Filename
 			break
 		}
 	}
@@ -44,6 +70,7 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 	if err != nil {
 		return fmt.Errorf("failed to upload on s3: %w", err)
 	}
+	go os.Remove(temp)
 
 	data, err := json.Marshal(&resp)
 	if err != nil {

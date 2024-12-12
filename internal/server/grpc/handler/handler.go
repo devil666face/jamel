@@ -20,6 +20,7 @@ type S3 interface {
 type Rmq interface {
 	Publish(string, []byte) error
 	Consume(context.Context, string, chan<- amqp.Delivery) error
+	Connect() error
 }
 
 type Queue interface {

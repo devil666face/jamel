@@ -75,10 +75,10 @@ gen-certs: ## generate grpc ssl certs
 	rm -f *.crt *.key *.cnf *.csr
 
 dev-up: ## up development environment
-	docker compose -f docker-compose.dev.yaml up -d
+	docker compose -f docker-compose.local.yaml up -d
 
 dev-rm: ## rm development environment
-	docker compose -f docker-compose.dev.yaml down
+	docker compose -f docker-compose.local.yaml down
 	sudo rm -rf rabbitmq
 	sudo rm -rf minio
 

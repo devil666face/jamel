@@ -40,6 +40,10 @@ func main() {
 	conn, err := grpc.NewClient(
 		_config.Server,
 		grpc.WithTransportCredentials(creds),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(10*1024*1024),
+			grpc.MaxCallSendMsgSize(10*1024*1024),
+		),
 	)
 	if err != nil {
 		log.Fatalf("error connect to server: %v\n", err)

@@ -46,6 +46,8 @@ func Must(
 	}
 	_grpc := grpc.NewServer(
 		grpc.Creds(creds),
+		grpc.MaxRecvMsgSize(10*1024*1024),
+		grpc.MaxSendMsgSize(10*1024*1024),
 	)
 	jamel.RegisterJamelServiceServer(
 		_grpc,

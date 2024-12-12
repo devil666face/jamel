@@ -20,6 +20,7 @@ type S3 interface {
 type Rmq interface {
 	Publish(string, []byte) error
 	Consume(context.Context, string, chan<- amqp.Delivery) error
+	Connect() error
 }
 
 type Cve interface {
@@ -49,6 +50,10 @@ var TaskTypeMap = map[jamel.TaskType]string{
 	jamel.TaskType_DOCKER_ARCHIVE: "docker-archive",
 	jamel.TaskType_DIR:            "dir",
 	jamel.TaskType_SBOM:           "sbom",
+}
+
+func (c *Client) Reconnect() error {
+	return c.rmq.Connect()
 }
 
 func (c *Client) Run() error {

@@ -149,7 +149,7 @@ func (r *Rmq) Consume(ctx context.Context, queuename string, messagechan chan<- 
 		return fmt.Errorf("failed to get messages chan: %w", err)
 	}
 	go func() {
-		// defer r.channel.Close()
+		defer r.Close()
 		for {
 			select {
 			case msg, ok := <-msgs:

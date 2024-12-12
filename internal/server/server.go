@@ -118,3 +118,7 @@ func (s *Server) ResponseQueueHandler() error {
 	}
 	return nil
 }
+
+func (s *Server) Reconnect() error {
+	return s.rmq.Connect()
+}

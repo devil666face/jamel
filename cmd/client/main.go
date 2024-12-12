@@ -45,5 +45,8 @@ func main() {
 		if err := _client.Run(); err != nil {
 			log.Printf("critical queue runtime error: %v", err)
 		}
+		if err := _client.Reconnect(); err != nil {
+			log.Printf("failed to reconnect rmq: %v", err)
+		}
 	}
 }

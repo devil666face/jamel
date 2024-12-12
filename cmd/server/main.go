@@ -100,6 +100,9 @@ func main() {
 			if err := _server.ResponseQueueHandler(); err != nil {
 				log.Printf("critical queue runtime error: %v", err)
 			}
+			if err := _server.Reconnect(); err != nil {
+				log.Printf("failed to reconnect rmq: %v", err)
+			}
 		}
 	}()
 

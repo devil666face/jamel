@@ -6,9 +6,7 @@ option go_package = "jamel/;jamel";
 enum TaskType {
   DOCKER =         0;
   DOCKER_ARCHIVE = 1;
-  DIR =            2;
-  FILE =           3;
-  SBOM =           4;
+  SBOM =           2;
 }
 
 message TaskRequest {

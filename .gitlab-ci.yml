@@ -85,6 +85,8 @@ check-admin:
     - builder
 
 deploy-dev:
+  variables:
+    DOCKER_HOST: "unix:///var/run/docker.sock"
   stage: deploy
   services:
     - docker:dind

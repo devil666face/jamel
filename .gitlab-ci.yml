@@ -86,11 +86,9 @@ check-admin:
 
 deploy-dev:
   variables:
-    DOCKER_HOST: "unix:///runner/services/docker/docker.sock"
+    DOCKER_HOST: "unix:///var/run/docker.sock"
     DOCKER_TLS_CERTDIR: ""
   stage: deploy
-  services:
-    - docker:dind
   image: docker:latest
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -99,7 +97,7 @@ deploy-dev:
     - echo "Starting services with docker-compose..."
     - docker-compose -f docker-compose.dev.yaml pull
     - docker-compose -f docker-compose.dev.yaml up -d
-    - docker-compose ps
+    - docker-compose -f docker-compose.dev.yaml ps
   dependencies:
     - check-admin
   tags:

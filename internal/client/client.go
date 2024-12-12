@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"jamel/gen/go/jamel"
@@ -51,6 +52,9 @@ var TaskTypeMap = map[jamel.TaskType]string{
 }
 
 func (c *Client) Run() error {
+	log.Println("loop started")
+	defer log.Println("loop stopped")
+
 	var (
 		taskch      = make(chan amqp.Delivery)
 		errch       = make(chan error)
@@ -66,34 +70,39 @@ func (c *Client) Run() error {
 
 	go func() {
 		for data := range taskch {
-			var task = jamel.TaskResponse{}
-			if err := json.Unmarshal(data.Body, &task); err != nil {
-				errch <- fmt.Errorf("unmarshal task from queue error: %w", err)
-				continue
-			}
-			if _, err := c.s3.Download(task.TaskId); err != nil {
-				errch <- fmt.Errorf("download from s3 error: %w", err)
-				continue
-			}
-			out, err := c.cve.Get(TaskTypeMap[task.TaskType], task.TaskId)
-			if err != nil {
-				errch <- fmt.Errorf("getting cves error: %w", err)
-				continue
-			}
-			task.Report = string(out)
-			data, err := json.Marshal(&task)
-			if err != nil {
-				errch <- fmt.Errorf("failed to marshal result before set in queue: %w", err)
-				continue
-			}
-			if err := c.rmq.Publish(rmq.ResultQueue, data); err != nil {
-				errch <- fmt.Errorf("failed to set in result queue: %w", err)
-				continue
-			}
-			if err := os.Remove(task.TaskId); err != nil {
-				errch <- fmt.Errorf("failed to remove: %w", err)
-				continue
-			}
+			func() {
+				var task = jamel.TaskResponse{}
+				if err := json.Unmarshal(data.Body, &task); err != nil {
+					errch <- fmt.Errorf("unmarshal task from queue error: %w", err)
+					return
+				}
+				if _, err := c.s3.Download(task.TaskId); err != nil {
+					errch <- fmt.Errorf("download from s3 error: %w", err)
+					return
+				}
+				defer func() {
+					if err := os.Remove(task.TaskId); err != nil {
+						// errch <- fmt.Errorf("failed to remove: %w", err)
+						return
+					}
+				}()
+				out, err := c.cve.Get(TaskTypeMap[task.TaskType], task.TaskId)
+				if err != nil {
+					errch <- fmt.Errorf("getting cves error: %w", err)
+					return
+				}
+				task.Report = string(out)
+				data, err := json.Marshal(&task)
+				if err != nil {
+					errch <- fmt.Errorf("failed to marshal result before set in queue: %w", err)
+					return
+				}
+				if err := c.rmq.Publish(rmq.ResultQueue, data); err != nil {
+					errch <- fmt.Errorf("failed to set in result queue: %w", err)
+					return
+				}
+			}()
+
 		}
 	}()
 

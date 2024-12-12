@@ -3,6 +3,7 @@ package rmq
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/streadway/amqp"
@@ -99,6 +100,7 @@ func (r *Rmq) Publish(queuename string, body []byte) error {
 	); err != nil {
 		return fmt.Errorf("publish error: %w", err)
 	}
+	log.Printf("set in %s: %v\n", queuename, string(body))
 	return nil
 }
 
@@ -120,13 +122,14 @@ func (r *Rmq) Consume(ctx context.Context, queuename string, messagechan chan<- 
 		return fmt.Errorf("failed to get messages chan: %w", err)
 	}
 	go func() {
-		defer r.channel.Close()
+		// defer r.channel.Close()
 		for {
 			select {
 			case msg, ok := <-msgs:
 				if !ok {
 					return
 				}
+				log.Printf("get from %s: %v\n", queuename, string(msg.Body))
 				messagechan <- msg
 			case <-ctx.Done():
 				return

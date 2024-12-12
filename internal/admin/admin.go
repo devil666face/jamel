@@ -1,8 +1,10 @@
 package admin
 
 import (
+	"fmt"
 	"jamel/gen/go/jamel"
 	"jamel/internal/admin/api"
+	"strings"
 
 	"google.golang.org/grpc"
 )
@@ -23,6 +25,14 @@ func Must(
 	}
 }
 
-func (a *Admin) NewTaskFromFile(filename string, tasktype jamel.TaskType) error {
-	return a.client.NewTaskFromFile(filename, tasktype)
+func (a *Admin) NewTaskFromFile(filename string, tasktype jamel.TaskType) (string, error) {
+	resp, err := a.client.NewTaskFromFile(filename, tasktype)
+	if err != nil {
+		return "", err
+	}
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintln(resp.TaskId))
+	sb.WriteString(fmt.Sprintln(resp.Filename))
+	sb.WriteString(fmt.Sprintln(resp.Report))
+	return sb.String(), nil
 }

@@ -34,19 +34,19 @@ func New(
 	}
 }
 
-func (a *Api) NewTaskFromFile(filename string, tasktype jamel.TaskType) error {
+func (a *Api) NewTaskFromFile(filename string, tasktype jamel.TaskType) (*jamel.TaskResponse, error) {
 	var (
 		sent int
 		_p   int
 	)
 	file, stat, err := fs.OpenFile(filename)
 	if err != nil {
-		return fmt.Errorf("error to send grpc upload file: %w", err)
+		return nil, fmt.Errorf("error to send grpc upload file: %w", err)
 	}
 	defer file.Close()
 	stream, err := a.client.NewTaskFromFile(a.ctx)
 	if err != nil {
-		return fmt.Errorf("error to start upload stream: %w", err)
+		return nil, fmt.Errorf("error to start upload stream: %w", err)
 	}
 	buf := make([]byte, 1024)
 	for {
@@ -56,7 +56,7 @@ func (a *Api) NewTaskFromFile(filename string, tasktype jamel.TaskType) error {
 		}
 		if err != nil {
 			defer stream.CloseSend()
-			return fmt.Errorf("error to read file chunk: %w", err)
+			return nil, fmt.Errorf("error to read file chunk: %w", err)
 		}
 		if err := stream.Send(&jamel.TaskRequest{
 			Filename: file.Name(),
@@ -64,21 +64,18 @@ func (a *Api) NewTaskFromFile(filename string, tasktype jamel.TaskType) error {
 			Chunk:    buf[:n],
 			TaskType: tasktype,
 		}); err != nil {
-			return fmt.Errorf("error to send file chunk via grpc: %w", err)
+			return nil, fmt.Errorf("error to send file chunk via grpc: %w", err)
 		}
 		sent += len(buf)
 		percent := int(float64(sent) / float64(stat.Size()) * 100)
 		if _p != percent {
-			fmt.Printf("uploading %s, transferred %d%%\n", file.Name(), percent)
+			fmt.Printf("\r➡️ uploading %s %d%%\r", file.Name(), percent)
 		}
 		_p = percent
 	}
 	resp, err := stream.CloseAndRecv()
 	if err != nil {
-		return fmt.Errorf("error to get success request about uploading: %w", err)
+		return nil, fmt.Errorf("error to get success request about uploading: %w", err)
 	}
-	fmt.Println(resp.TaskId)
-	fmt.Println(resp.Report)
-	fmt.Println(resp.TaskType)
-	return nil
+	return resp, err
 }

@@ -46,10 +46,4 @@ func main() {
 			log.Printf("critical queue runtime error: %v", err)
 		}
 	}
-
-	// out, err := cve.Get(os.Args[1])
-	// 	log.Fatalln(err)
-	// if err != nil {
-	// }
-	// fmt.Println(string(out))
 }

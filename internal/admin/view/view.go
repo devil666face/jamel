@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	Emoji    = "🪣"
+	Emoji    = "🐝"
 	NotFound = "⚠️ command not found"
 )
 
@@ -23,7 +23,7 @@ const (
 
 const (
 	Docker        = "docker"
-	DockerArchive = "docker-archive"
+	DockerArchive = "archive-docker"
 	Dir           = "dir"
 	File          = "file"
 	Sbom          = "sbom"
@@ -42,8 +42,9 @@ var (
 )
 
 type View struct {
-	prompt *prompt.Prompt
-	admin  *admin.Admin
+	prompt         *prompt.Prompt
+	admin          *admin.Admin
+	dockerComplete []string
 }
 
 func New(_admin *admin.Admin) *View {
@@ -73,13 +74,13 @@ func (v *View) executor(in string) {
 		NewPrompt(
 			v.analyzeExecutor,
 			v.analyzeCompleter,
-			fmt.Sprintf("%s%s >> ", Title, "🗄️ "+Analyze),
+			fmt.Sprintf("%s%s %s >> ", Title, "⚙️", Analyze),
 		).Run()
 	// case Report:
 	// 	NewPrompt(
 	// 		v.settingsExecutor,
 	// 		v.settingsCompleter,
-	// 		fmt.Sprintf("%s%s >> ", Title, "⚙️ "+Report),
+	// fmt.Sprintf("%s %s %s >> ", Title, "📒", Analyze),
 	// 	).Run()
 	case Exit:
 		os.Exit(0)
@@ -149,4 +150,12 @@ func PromptOptions(prefix string, exit string) []prompt.Option {
 		})),
 	}
 	return options
+}
+
+func ListToSuggest(list []string) []prompt.Suggest {
+	suggest := []prompt.Suggest{}
+	for _, l := range list {
+		suggest = append(suggest, prompt.Suggest{Text: l, Description: ""})
+	}
+	return suggest
 }

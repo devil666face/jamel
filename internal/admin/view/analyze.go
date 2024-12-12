@@ -1,9 +1,15 @@
 package view
 
 import (
-	"jamel/gen/go/jamel"
+	"errors"
+	"fmt"
 	"slices"
 	"strings"
+
+	"jamel/gen/go/jamel"
+
+	"jamel/pkg/fs"
+	"jamel/pkg/hub"
 
 	"github.com/c-bata/go-prompt"
 )
@@ -28,7 +34,12 @@ func analyzeCommands() []string {
 }
 
 func (v *View) analyzeAction(cmd string, filename string) {
-	v.admin.NewTaskFromFile(filename, analyzeMap[cmd])
+	out, err := v.admin.NewTaskFromFile(filename, analyzeMap[cmd])
+	if err != nil {
+		ErrorFunc(err)
+		return
+	}
+	fmt.Print(out)
 }
 
 func (v *View) analyzeExecutor(in string) {
@@ -38,7 +49,14 @@ func (v *View) analyzeExecutor(in string) {
 	}
 
 	if slices.Contains(analyzeList, args[0]) {
-		v.analyzeAction(args[0], args[1])
+		if len(args) < 2 {
+			ErrorFunc(fmt.Errorf("you must set file, dir or docker image name"))
+			return
+		}
+		go v.analyzeAction(
+			args[0],
+			args[1],
+		)
 		return
 	}
 
@@ -50,15 +68,87 @@ func (v *View) analyzeCompleter(d prompt.Document) []prompt.Suggest {
 		{Text: DockerArchive, Description: "docker image from your local .tar archive"},
 		{Text: Docker, Description: "docker image from public registry"},
 		{Text: Dir, Description: "your local folder"},
-		{Text: File, Description: ".tar or .zip archive or file with requirements (go.mod,requirement.txt,modules.json...)"},
+		{Text: File, Description: ".tar or .zip archive or file with requirements (go.mod, requirement.txt, modules.json...)"},
 		{Text: Sbom, Description: "sbom file in json"},
 	}
-	// remove second postition complete
+
 	for _, c := range complete {
 		if HasPrefix(d, c.Text) {
 			complete = []prompt.Suggest{}
 		}
 	}
 
-	return prompt.FilterContains(complete, d.GetWordBeforeCursor(), true)
+	if HasPrefix(d, DockerArchive) {
+		complete = ListToSuggest(fs.MustFilesInDot("tar", "zip"))
+	}
+
+	if HasPrefix(d, Docker) {
+		go v.dockerSuggestion(d.GetWordBeforeCursor())
+		complete = ListToSuggest(v.dockerComplete)
+	}
+
+	if HasPrefix(d, File) {
+		complete = ListToSuggest(fs.MustFilesInDot())
+	}
+
+	return prompt.FilterContains(
+		complete,
+		d.GetWordBeforeCursor(),
+		true,
+	)
+}
+
+func (v *View) dockerSuggestion(query string) {
+	var s = strings.Fields(strings.TrimSpace(query))
+	if len(s) == 0 {
+		return
+	}
+	query = s[0]
+	if strings.Contains(query, ":") {
+		var (
+			err           error
+			tags, suggest = []string{}, []string{}
+			s             = strings.Split(query, ":")
+		)
+		if len(s) == 0 {
+			return
+		}
+		var (
+			image = s[0]
+			name  = strings.Split(image, "/")
+		)
+
+		switch len(name) {
+		case 1:
+			tags, err = hub.SearchDockerHubImageTags(name[0])
+			if errors.Is(err, hub.ErrTooManyRequests) {
+				return
+			}
+			if err != nil {
+				ErrorFunc(err)
+			}
+		case 2:
+			tags, err = hub.SearchDockerHubImageTags(name[1], name[0])
+			if errors.Is(err, hub.ErrTooManyRequests) {
+				return
+			}
+			if err != nil {
+				ErrorFunc(err)
+			}
+		}
+		for _, t := range tags {
+			suggest = append(suggest, fmt.Sprintf("%s%s", query, t))
+		}
+		v.dockerComplete = suggest
+		return
+	} else {
+		images, err := hub.SearchDockerHubImages(query)
+		if errors.Is(err, hub.ErrTooManyRequests) {
+			return
+		}
+		if err != nil {
+			ErrorFunc(err)
+		}
+		v.dockerComplete = images
+	}
 }

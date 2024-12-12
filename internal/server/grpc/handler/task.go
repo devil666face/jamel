@@ -23,7 +23,6 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 		return fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
-	defer os.Remove(temp)
 	for {
 		task, err := stream.Recv()
 		if err != nil {
@@ -44,6 +43,7 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 	if err != nil {
 		return fmt.Errorf("failed to upload on s3: %w", err)
 	}
+	go os.Remove(temp)
 
 	data, err := json.Marshal(&resp)
 	if err != nil {

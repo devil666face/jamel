@@ -47,9 +47,6 @@ func main() {
 		_admin,
 	)
 	_view.Run()
-
-	// if err := _admin.NewTaskFromFile(os.Args[1]); err != nil {
-	// }
 }
 
 func loadTLSCreds() (credentials.TransportCredentials, error) {

@@ -3,7 +3,10 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"flag"
 	"fmt"
+	"log"
+	"os"
 
 	_ "embed"
 
@@ -13,6 +16,10 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+)
+
+var (
+	force = flag.String("force", "", "use force for check image from docker hub without ui")
 )
 
 //go:embed server.crt
@@ -27,7 +34,7 @@ var TLSAdminCert string
 func main() {
 	creds, err := loadTLSCreds()
 	if err != nil {
-		fmt.Printf("failed to load server cert: %v\n", err)
+		log.Fatalf("failed to load server cert: %v\n", err)
 	}
 	_config := config.Must()
 	conn, err := grpc.NewClient(
@@ -35,7 +42,7 @@ func main() {
 		grpc.WithTransportCredentials(creds),
 	)
 	if err != nil {
-		fmt.Printf("error connect to server: %v\n", err)
+		log.Fatalf("error connect to server: %v\n", err)
 	}
 	defer conn.Close()
 	_admin := admin.Must(
@@ -46,6 +53,16 @@ func main() {
 	_view := view.New(
 		_admin,
 	)
+
+	flag.Parse()
+	if *force != "" {
+		out, err := _admin.NewTaskFromImage(*force)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		fmt.Println(out)
+		os.Exit(0)
+	}
 	_view.Run()
 }
 

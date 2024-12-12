@@ -17,8 +17,6 @@ var (
 	analyzeMap = map[string]jamel.TaskType{
 		Docker:        jamel.TaskType_DOCKER,
 		DockerArchive: jamel.TaskType_DOCKER_ARCHIVE,
-		Dir:           jamel.TaskType_DIR,
-		File:          jamel.TaskType_DIR,
 		Sbom:          jamel.TaskType_SBOM,
 	}
 	analyzeList = analyzeCommands()
@@ -75,8 +73,6 @@ func (v *View) analyzeCompleter(d prompt.Document) []prompt.Suggest {
 	var complete = []prompt.Suggest{
 		{Text: DockerArchive, Description: "docker image from your local .tar archive"},
 		{Text: Docker, Description: "docker image from public registry"},
-		{Text: Dir, Description: "your local folder"},
-		{Text: File, Description: ".tar or .zip archive or file with requirements (go.mod, requirement.txt, modules.json...)"},
 		{Text: Sbom, Description: "sbom file in json"},
 	}
 
@@ -95,8 +91,8 @@ func (v *View) analyzeCompleter(d prompt.Document) []prompt.Suggest {
 		complete = ListToSuggest(v.dockerComplete)
 	}
 
-	if HasPrefix(d, File) {
-		complete = ListToSuggest(fs.MustFilesInDot())
+	if HasPrefix(d, Sbom) {
+		complete = ListToSuggest(fs.MustFilesInDot("json"))
 	}
 
 	return prompt.FilterContains(

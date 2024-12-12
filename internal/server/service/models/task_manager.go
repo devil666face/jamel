@@ -19,6 +19,8 @@ func (tm *TaskManager) NewTask(task *jamel.TaskResponse) *Task {
 			_task.Name = task.Name
 			_task.TaskType = task.TaskType
 			_task.Report = task.Report
+			_task.Json = task.Json
+			_task.Sbom = task.Sbom
 		}
 	)
 	mapp(_task)

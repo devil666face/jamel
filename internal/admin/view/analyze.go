@@ -13,16 +13,24 @@ import (
 	"github.com/c-bata/go-prompt"
 )
 
-var (
-	analyzeMap = map[string]jamel.TaskType{
-		Docker:        jamel.TaskType_DOCKER,
-		DockerArchive: jamel.TaskType_DOCKER_ARCHIVE,
-		Sbom:          jamel.TaskType_SBOM,
-	}
-	analyzeList = analyzeCommands()
+const (
+	docker        = "docker"
+	dockerArchive = "archive-docker"
+	file          = "file"
+	sbom          = "sbom"
 )
 
-func analyzeCommands() []string {
+var (
+	analyzeMap = map[string]jamel.TaskType{
+		docker:        jamel.TaskType_DOCKER,
+		dockerArchive: jamel.TaskType_DOCKER_ARCHIVE,
+		sbom:          jamel.TaskType_SBOM,
+		file:          jamel.TaskType_FILE,
+	}
+	analyzeList = analyzeCmds()
+)
+
+func analyzeCmds() []string {
 	var commands = []string{}
 	for cmd := range analyzeMap {
 		commands = append(commands, cmd)
@@ -32,20 +40,22 @@ func analyzeCommands() []string {
 
 func (v *View) analyzeAction(cmd string, filename string) {
 	var (
-		out string
-		err error
+		resp *jamel.TaskResponse
+		err  error
 	)
 	switch analyzeMap[cmd] {
 	case jamel.TaskType_DOCKER:
-		out, err = v.admin.NewTaskFromImage(filename)
+		resp, err = v.admin.Client.TaskFromImage(filename)
 	default:
-		out, err = v.admin.NewTaskFromFile(filename, analyzeMap[cmd])
+		resp, err = v.admin.Client.TaskFromFile(
+			filename, analyzeMap[cmd],
+		)
 	}
 	if err != nil {
 		ErrorFunc(err)
 		return
 	}
-	fmt.Print(out)
+	fmt.Print(FormatTaskResponse(resp))
 }
 
 func (v *View) analyzeExecutor(in string) {
@@ -66,14 +76,21 @@ func (v *View) analyzeExecutor(in string) {
 		return
 	}
 
-	NotFoundFunc()
+	switch args[0] {
+	case exit:
+		return
+	default:
+		NotFoundFunc()
+	}
 }
 
 func (v *View) analyzeCompleter(d prompt.Document) []prompt.Suggest {
 	var complete = []prompt.Suggest{
-		{Text: DockerArchive, Description: "docker image from your local .tar archive"},
-		{Text: Docker, Description: "docker image from public registry"},
-		{Text: Sbom, Description: "sbom file in json"},
+		{Text: docker, Description: "image from docker.hub"},
+		{Text: dockerArchive, Description: "image from local tar archive"},
+		{Text: file, Description: "file or dir on disk"},
+		{Text: sbom, Description: "json sbom file"},
+		{Text: exit, Description: "close"},
 	}
 
 	for _, c := range complete {
@@ -82,16 +99,17 @@ func (v *View) analyzeCompleter(d prompt.Document) []prompt.Suggest {
 		}
 	}
 
-	if HasPrefix(d, DockerArchive) {
+	if HasPrefix(d, dockerArchive) {
 		complete = ListToSuggest(fs.MustFilesInDot("tar", "zip"))
 	}
-
-	if HasPrefix(d, Docker) {
+	if HasPrefix(d, docker) {
 		go v.dockerSuggestion(d.GetWordBeforeCursor())
 		complete = ListToSuggest(v.dockerComplete)
 	}
-
-	if HasPrefix(d, Sbom) {
+	if HasPrefix(d, file) {
+		complete = ListToSuggest(fs.MustEntitiesInDot())
+	}
+	if HasPrefix(d, sbom) {
 		complete = ListToSuggest(fs.MustFilesInDot("json"))
 	}
 

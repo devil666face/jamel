@@ -60,7 +60,7 @@ func main() {
 
 	flag.Parse()
 	if *force != "" {
-		out, err := _admin.NewTaskFromImage(*force)
+		out, err := _admin.Client.TaskFromImage(*force)
 		if err != nil {
 			log.Fatalln(err)
 		}

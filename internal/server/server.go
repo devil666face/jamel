@@ -76,16 +76,28 @@ func (s *Server) streamwrap(stream Contextable) *handler.Handler {
 	return s.wrap(&ctx)
 }
 
-func (s *Server) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServer) error {
+func (s *Server) TaskFromFile(stream jamel.JamelService_TaskFromFileServer) error {
 	return s.
 		streamwrap(stream).
-		NewTaskFromFile(stream)
+		TaskFromFile(stream)
 }
 
-func (s *Server) NewTaskFromImage(ctx context.Context, request *jamel.TaskRequest) (*jamel.TaskResponse, error) {
+func (s *Server) TaskFromImage(ctx context.Context, request *jamel.TaskRequest) (*jamel.TaskResponse, error) {
 	return s.
 		wrap(&ctx).
-		NewTaskFromImage(request)
+		TaskFromImage(request)
+}
+
+func (s *Server) TaskList(ctx context.Context, request *jamel.Request) (*jamel.TaskListResponse, error) {
+	return s.
+		wrap(&ctx).
+		TaskList(request)
+}
+
+func (s *Server) GetReport(ctx context.Context, request *jamel.ReportRequest) (*jamel.TaskResponse, error) {
+	return s.
+		wrap(&ctx).
+		GetReport(request)
 }
 
 func (s *Server) ResponseQueueHandler() error {

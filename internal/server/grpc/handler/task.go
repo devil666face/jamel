@@ -7,12 +7,13 @@ import (
 	"path/filepath"
 
 	"jamel/gen/go/jamel"
+	"jamel/internal/server/service/models"
 	"jamel/pkg/rmq"
 
 	"github.com/google/uuid"
 )
 
-func (h *Handler) NewTaskFromImage(request *jamel.TaskRequest) (*jamel.TaskResponse, error) {
+func (h *Handler) TaskFromImage(request *jamel.TaskRequest) (*jamel.TaskResponse, error) {
 	var resp = &jamel.TaskResponse{
 		TaskId:   uuid.NewString(),
 		Name:     request.Filename,
@@ -32,16 +33,14 @@ func (h *Handler) NewTaskFromImage(request *jamel.TaskRequest) (*jamel.TaskRespo
 	}
 
 	if err := h.manager.Task.Create(
-		h.manager.Task.NewTask(resp),
+		h.manager.Task.NewTask(resp, func(t *models.Task) { resp.Json = ""; resp.Sbom = "" }),
 	); err != nil {
 		return nil, fmt.Errorf("failed to write resp in database: %w", err)
 	}
-	resp.Json = ""
-	resp.Sbom = ""
 	return resp, nil
 }
 
-func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServer) error {
+func (h *Handler) TaskFromFile(stream jamel.JamelService_TaskFromFileServer) error {
 	var (
 		received int64
 		resp     = &jamel.TaskResponse{}
@@ -88,13 +87,10 @@ func (h *Handler) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServe
 	}
 
 	if err := h.manager.Task.Create(
-		h.manager.Task.NewTask(resp),
+		h.manager.Task.NewTask(resp, func(t *models.Task) { resp.Json = ""; resp.Sbom = "" }),
 	); err != nil {
 		return fmt.Errorf("failed to write resp in database: %w", err)
 	}
-
-	resp.Json = ""
-	resp.Sbom = ""
 	return stream.SendAndClose(
 		resp,
 	)

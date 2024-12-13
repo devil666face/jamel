@@ -7,6 +7,7 @@ enum TaskType {
   DOCKER =         0;
   DOCKER_ARCHIVE = 1;
   SBOM =           2;
+  FILE =           3;
 }
 
 message TaskRequest {
@@ -24,4 +25,9 @@ message TaskResponse {
   string sbom        = 5;
   TaskType task_type = 6;
   string error       = 7;
+  int64  created_at  = 8;
+}
+
+message TaskListResponse {
+  repeated TaskResponse tasks = 1;
 }

@@ -8,14 +8,15 @@ variables:
   APP: "jamel"
   CLIENT: "client"
   SERVER: "server"
+  CI_REGISTRY: "git.codenrock.com:5050"
 
 build-dev:
   stage: build
   services:
-    - git.codenrock.com:5050/5hm3l/jamel/docker:dind
-  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+    - git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:dind
+  image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - docker info
   script:
     - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_SHORT_SHA
@@ -32,10 +33,10 @@ build-dev:
 build-main:
   stage: build
   services:
-    - git.codenrock.com:5050/5hm3l/jamel/docker:dind
-  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+    - git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:dind
+  image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - docker info
   script:
     - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_SHORT_SHA
@@ -66,10 +67,10 @@ build-admin:
 check-admin:
   stage: test
   services:
-    - git.codenrock.com:5050/5hm3l/jamel/docker:dind
-  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+    - git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:dind
+  image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - docker info
     - docker pull ubuntu:latest
     - docker save -o ubuntu.tar ubuntu:latest
@@ -89,12 +90,12 @@ check-admin:
 #     DOCKER_HOST: "unix:///var/run/docker.sock"
 #     DOCKER_TLS_CERTDIR: ""
 #   stage: deploy
-#   image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+#   image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
 #   before_script:
-#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#     - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
 #     - docker info
 #   script:
-#     - echo "Starting services with docker-compose..."
+#     - eecho "Starting services with docker-compose..."
 #     - docker-compose -f docker-compose.dev.yaml pull
 #     - docker-compose -f docker-compose.dev.yaml up -d
 #     - docker-compose -f docker-compose.dev.yaml ps
@@ -103,19 +104,19 @@ check-admin:
 #   only:
 #     - dev
 #   tags:
-#     - jamel-dev
+#     - builder
 
 # deploy-prod:
 #   variables:
 #     DOCKER_HOST: "unix:///var/run/docker.sock"
 #     DOCKER_TLS_CERTDIR: ""
 #   stage: deploy
-#   image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+#   image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
 #   before_script:
-#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#     - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
 #     - docker info
 #   script:
-#     - echo "Starting services with docker-compose..."
+#     - eecho "Starting services with docker-compose..."
 #     - docker-compose -f docker-compose.yaml pull
 #     - docker-compose -f docker-compose.yaml up -d
 #     - docker-compose -f docker-compose.yaml ps
@@ -124,4 +125,4 @@ check-admin:
 #   only:
 #     - main
 #   tags:
-#     - jamel-dev
+#     - builder

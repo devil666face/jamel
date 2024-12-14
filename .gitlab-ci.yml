@@ -26,8 +26,8 @@ build-dev:
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER --all-tags
   tags:
     - jamel-dev
-  # only:
-  #   - dev
+  only:
+    - dev
 
 build-main:
   stage: build
@@ -46,8 +46,8 @@ build-main:
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER --all-tags
   tags:
     - jamel-dev
-  # only:
-  #   - main
+  only:
+    - main
 
 build-admin:
   stage: build
@@ -100,8 +100,8 @@ deploy-dev:
     - docker-compose -f docker-compose.dev.yaml ps
   dependencies:
     - check-admin
-  # only:
-  #   - dev
+  only:
+    - dev
   tags:
     - jamel-dev
 
@@ -121,7 +121,7 @@ deploy-prod:
     - docker-compose -f docker-compose.yaml ps
   dependencies:
     - check-admin
-  # only:
-  #   - main
+  only:
+    - main
   tags:
     - jamel-dev

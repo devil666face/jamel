@@ -33,6 +33,9 @@ func (q *Queue) Get(id string) (*jamel.TaskResponse, error) {
 	if !ok {
 		return nil, ErrNotFound
 	}
+	if resp.Error != "" {
+		return nil, errors.New(resp.Error)
+	}
 	delete(q.s, id)
 	return resp, nil
 }

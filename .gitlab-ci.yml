@@ -53,7 +53,7 @@ build-admin:
   stage: build
   image: golang:1.23.4-alpine
   before_script:
-    - apk add --no-cache make
+    - apk add --no-cache make binutils
   script:
     - make release
   artifacts:

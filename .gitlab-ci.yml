@@ -8,6 +8,7 @@ variables:
   APP: "jamel"
   CLIENT: "client"
   SERVER: "server"
+  CI_REGISTRY: "git.codenrock.com:5050"
 
 build-dev:
   stage: build

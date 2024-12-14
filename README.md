@@ -4,15 +4,15 @@
 
 Требования к окружению:
 
-> [!important] ubuntu 22.04/ubuntu 24.04/debian 12/
-> [!important] установленный docker и docker compose
+> - ubuntu 22.04/ubuntu 24.04/debian 12/
+> - установленный docker и docker compose
 
 ```bash
 apt update --yes
 apt-get install docker.io docker-compose-v2 --yes
 ```
 
-> [!note] если `docker-compose-v2` не найден - установите `docker-compose` и далее во всех вызовах `docker compose` используйте `docker-compose`
+> если `docker-compose-v2` не найден - установите `docker-compose` и далее во всех вызовах `docker compose` используйте `docker-compose`
 
 ## Запуск приложения
 
@@ -34,7 +34,7 @@ Resolving deltas: 100% (2378/2378), done.
 Updating files: 100% (8257/8257), done.
 ```
 
-> [!info] данные для подключения доступны на [странице задачи](https://codenrock.com/contests/sovkombank-securehack/#/tasks/2206/6292)
+> данные для подключения доступны на [странице задачи](https://codenrock.com/contests/sovkombank-securehack/#/tasks/2206/6292)
 
 ```bash
 cd jamel/
@@ -69,7 +69,7 @@ docker compose up -d
  ✔ Container server    Started
 ```
 
-> [!important] Работа с системой возможна только после успешного обновления баз CVE
+> работа с системой возможна только после успешного обновления баз CVE
 
 ```bash
 docker logs client
@@ -99,11 +99,11 @@ jamel-admin_darwin_amd64 - macos intel
 
 ```
 
-> [!note] при необходимости сделайте файл управляемым `chmod +x jamel-admin_linux` или добавьте файл в доверенные на своей macos
+> при необходимости сделайте файл управляемым `chmod +x jamel-admin_linux` или добавьте файл в доверенные на своей macos
 
 Взаимодействие админского(управляющего) файла с сервером осуществляется по сети, поэтому возможно подключение к удаленно развернутому серверу или подключение из другой сети. Для этого укажте адрес сервера в переменной окружения `SERVER=ip:port`
 
-> [!info] стандартно управляющий файл подключается на 127.0.0.1:8443
+> стандартно управляющий файл подключается на 127.0.0.1:8443
 
 ```bash
 SERVER=192.168.10.10:8443 ./jamel-admin_linux

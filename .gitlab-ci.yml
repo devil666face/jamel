@@ -15,7 +15,7 @@ build-dev:
     - git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:dind
   image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
   before_script:
-    - echo $DOCKER_ACCESS_TOKEN | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - docker info
   script:
     - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_SHORT_SHA
@@ -36,7 +36,7 @@ build-main:
     - git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:dind
   image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
   before_script:
-    - echo $DOCKER_ACCESS_TOKEN | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - docker info
   script:
     - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT:$CI_COMMIT_SHORT_SHA
@@ -72,7 +72,7 @@ check-admin:
     - git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:dind
   image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
   before_script:
-    - echo $DOCKER_ACCESS_TOKEN | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - docker info
     - docker pull ubuntu:latest
     - docker save -o ubuntu.tar ubuntu:latest
@@ -95,10 +95,10 @@ check-admin:
 #   stage: deploy
 #   image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
 #   before_script:
-#     - echo $DOCKER_ACCESS_TOKEN | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+#     - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
 #     - docker info
 #   script:
-#     - echo "Starting services with docker-compose..."
+#     - eecho "Starting services with docker-compose..."
 #     - docker-compose -f docker-compose.dev.yaml pull
 #     - docker-compose -f docker-compose.dev.yaml up -d
 #     - docker-compose -f docker-compose.dev.yaml ps
@@ -116,10 +116,10 @@ check-admin:
 #   stage: deploy
 #   image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
 #   before_script:
-#     - echo $DOCKER_ACCESS_TOKEN | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+#     - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
 #     - docker info
 #   script:
-#     - echo "Starting services with docker-compose..."
+#     - eecho "Starting services with docker-compose..."
 #     - docker-compose -f docker-compose.yaml pull
 #     - docker-compose -f docker-compose.yaml up -d
 #     - docker-compose -f docker-compose.yaml ps

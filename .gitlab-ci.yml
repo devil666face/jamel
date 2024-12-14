@@ -12,8 +12,8 @@ variables:
 build-dev:
   stage: build
   services:
-    - git.codenrock.com:5050/5hm3l/jamel/docker:dind
-  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+    - git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:dind
+  image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -25,15 +25,15 @@ build-dev:
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT --all-tags
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER --all-tags
   tags:
-    - jamel-dev
+    - builder
   only:
     - dev
 
 build-main:
   stage: build
   services:
-    - git.codenrock.com:5050/5hm3l/jamel/docker:dind
-  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+    - git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:dind
+  image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -45,7 +45,7 @@ build-main:
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT --all-tags
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER --all-tags
   tags:
-    - jamel-dev
+    - builder
   only:
     - main
 
@@ -61,13 +61,13 @@ build-admin:
       - bin/*
     expire_in: 1 week
   tags:
-    - jamel-dev
+    - builder
 
 check-admin:
   stage: test
   services:
-    - git.codenrock.com:5050/5hm3l/jamel/docker:dind
-  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+    - git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:dind
+  image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -82,14 +82,14 @@ check-admin:
   dependencies:
     - build-admin
   tags:
-    - jamel-dev
+    - builder
 
 # deploy-dev:
 #   variables:
 #     DOCKER_HOST: "unix:///var/run/docker.sock"
 #     DOCKER_TLS_CERTDIR: ""
 #   stage: deploy
-#   image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+#   image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
 #   before_script:
 #     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 #     - docker info
@@ -103,14 +103,14 @@ check-admin:
 #   only:
 #     - dev
 #   tags:
-#     - jamel-dev
+#     - builder
 
 # deploy-prod:
 #   variables:
 #     DOCKER_HOST: "unix:///var/run/docker.sock"
 #     DOCKER_TLS_CERTDIR: ""
 #   stage: deploy
-#   image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+#   image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/docker:latest
 #   before_script:
 #     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 #     - docker info
@@ -124,4 +124,4 @@ check-admin:
 #   only:
 #     - main
 #   tags:
-#     - jamel-dev
+#     - builder

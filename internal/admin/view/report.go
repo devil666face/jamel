@@ -16,6 +16,17 @@ const (
 	pdf  = "pdf"
 )
 
+func (v *View) handleIdTask(args []string, taskFunc func(string) error) error {
+	if len(args) < 2 {
+		return fmt.Errorf("set task id")
+	}
+	id, ok := v.indexIdMap[args[1]]
+	if !ok {
+		return fmt.Errorf("invalid task index")
+	}
+	return taskFunc(id)
+}
+
 func (v *View) reportExecutor(in string) {
 	args := strings.Fields(in)
 	if len(args) == 0 {
@@ -32,53 +43,32 @@ func (v *View) reportExecutor(in string) {
 		go v.setTaskComplete(tasks.Tasks)
 		fmt.Print(FormatTable(tasks.Tasks))
 	case show:
-		if len(args) < 2 {
-			ErrorFunc(fmt.Errorf("set task id"))
-			return
-		}
-		id, ok := v.indexIdMap[args[1]]
-		if !ok {
-			ErrorFunc(fmt.Errorf("invalid task index"))
-			return
-		}
-		resp, err := v.admin.Client.GetReport(id)
-		if err != nil {
+		if err := v.handleIdTask(args, func(id string) error {
+			resp, err := v.admin.Client.GetReport(id)
+			if err != nil {
+				return err
+			}
+			fmt.Print(FormatTaskResponse(resp))
+			return nil
+		}); err != nil {
 			ErrorFunc(err)
-			return
 		}
-		fmt.Print(FormatTaskResponse(resp))
-	case json:
-		if len(args) < 2 {
-			ErrorFunc(fmt.Errorf("set task id"))
-			return
-		}
-		id, ok := v.indexIdMap[args[1]]
-		if !ok {
-			ErrorFunc(fmt.Errorf("invalid task index"))
-			return
-		}
-		file, err := v.admin.Client.GetFile(id, jamel.ReportType_JSON)
-		if err != nil {
+	case json, sbom:
+		reportType := map[string]jamel.ReportType{
+			json: jamel.ReportType_JSON,
+			sbom: jamel.ReportType_SBOM_R,
+		}[args[0]]
+
+		if err := v.handleIdTask(args, func(id string) error {
+			file, err := v.admin.Client.GetFile(id, reportType)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("\r⬅️ %s - downloaded\n", file)
+			return nil
+		}); err != nil {
 			ErrorFunc(err)
-			return
 		}
-		fmt.Printf("\r⬅️ %s - downloaded\n", file)
-	case sbom:
-		if len(args) < 2 {
-			ErrorFunc(fmt.Errorf("set task id"))
-			return
-		}
-		id, ok := v.indexIdMap[args[1]]
-		if !ok {
-			ErrorFunc(fmt.Errorf("invalid task index"))
-			return
-		}
-		file, err := v.admin.Client.GetFile(id, jamel.ReportType_SBOM_R)
-		if err != nil {
-			ErrorFunc(err)
-			return
-		}
-		fmt.Printf("\r⬅️ %s - downloaded\n", file)
 	// case pdf:
 	case exit:
 		return

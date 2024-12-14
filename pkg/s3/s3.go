@@ -39,7 +39,7 @@ func New(
 	if err := _client.MakeBucket(ctx, _bucket, minio.MakeBucketOptions{}); err != nil {
 		exists, errBucketExists := _client.BucketExists(ctx, _bucket)
 		if !(errBucketExists == nil && exists) {
-			return nil, fmt.Errorf("failed to create bucker: %w", err)
+			return nil, fmt.Errorf("failed to create bucket: %w", err)
 		}
 	}
 	return &S3{

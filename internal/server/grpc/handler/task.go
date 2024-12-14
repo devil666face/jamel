@@ -13,6 +13,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const errorTimeout = 180
+
 func (h *Handler) TaskFromImage(request *jamel.TaskRequest) (*jamel.TaskResponse, error) {
 	var resp = &jamel.TaskResponse{
 		TaskId:   uuid.NewString(),
@@ -27,7 +29,7 @@ func (h *Handler) TaskFromImage(request *jamel.TaskRequest) (*jamel.TaskResponse
 		return nil, fmt.Errorf("failed to set task in queue: %w", err)
 	}
 
-	resp, err = h.results.WaitResp(resp.TaskId, 120)
+	resp, err = h.results.WaitResp(resp.TaskId, errorTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resp from result queue: %w", err)
 	}
@@ -81,7 +83,7 @@ func (h *Handler) TaskFromFile(stream jamel.JamelService_TaskFromFileServer) err
 		return fmt.Errorf("failed to set task in queue: %w", err)
 	}
 
-	resp, err = h.results.WaitResp(resp.TaskId, 120)
+	resp, err = h.results.WaitResp(resp.TaskId, errorTimeout)
 	if err != nil {
 		return fmt.Errorf("failed to get resp from result queue: %w", err)
 	}

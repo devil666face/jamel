@@ -132,7 +132,9 @@ func (c *Cve) GetUnwrap(cvetype string, input string) (string, string, string, e
 }
 
 func (c *Cve) Get(cvetype string, input string) (Report, error) {
-	c.m.Lock()
+	if lock := c.m.TryLock(); !lock {
+		return Report{}, fmt.Errorf("cve database is updating, wait before update is over")
+	}
 	defer c.m.Unlock()
 
 	store, status, closer, err := grype.LoadVulnerabilityDB(

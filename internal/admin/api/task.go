@@ -55,7 +55,7 @@ func (a *Api) TaskFromFile(filename string, tasktype jamel.TaskType) (*jamel.Tas
 	}
 	resp, err := stream.CloseAndRecv()
 	if err != nil {
-		return nil, fmt.Errorf("error to get success request about uploading: %w", err)
+		return nil, fmt.Errorf("uploading error: %w", err)
 	}
 	return resp, err
 }

@@ -12,8 +12,8 @@ variables:
 build-dev:
   stage: build
   services:
-    - docker:dind
-  image: docker:latest
+    - docker:27.4.0-dind
+  image: docker:27.4.0
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -32,8 +32,8 @@ build-dev:
 build-main:
   stage: build
   services:
-    - docker:dind
-  image: docker:latest
+    - docker:27.4.0-dind
+  image: docker:27.4.0
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -66,8 +66,8 @@ build-admin:
 check-admin:
   stage: test
   services:
-    - docker:dind
-  image: docker:latest
+    - docker:27.4.0-dind
+  image: docker:27.4.0
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -89,7 +89,7 @@ deploy-dev:
     DOCKER_HOST: "unix:///var/run/docker.sock"
     DOCKER_TLS_CERTDIR: ""
   stage: deploy
-  image: docker:latest
+  image: docker:27.4.0
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -110,7 +110,7 @@ deploy-prod:
     DOCKER_HOST: "unix:///var/run/docker.sock"
     DOCKER_TLS_CERTDIR: ""
   stage: deploy
-  image: docker:latest
+  image: docker:27.4.0
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info

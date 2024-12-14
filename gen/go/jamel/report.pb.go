@@ -20,12 +20,62 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ReportType int32
+
+const (
+	ReportType_PDF    ReportType = 0
+	ReportType_JSON   ReportType = 1
+	ReportType_SBOM_R ReportType = 2
+)
+
+// Enum value maps for ReportType.
+var (
+	ReportType_name = map[int32]string{
+		0: "PDF",
+		1: "JSON",
+		2: "SBOM_R",
+	}
+	ReportType_value = map[string]int32{
+		"PDF":    0,
+		"JSON":   1,
+		"SBOM_R": 2,
+	}
+)
+
+func (x ReportType) Enum() *ReportType {
+	p := new(ReportType)
+	*p = x
+	return p
+}
+
+func (x ReportType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReportType) Descriptor() protoreflect.EnumDescriptor {
+	return file_jamel_report_proto_enumTypes[0].Descriptor()
+}
+
+func (ReportType) Type() protoreflect.EnumType {
+	return &file_jamel_report_proto_enumTypes[0]
+}
+
+func (x ReportType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReportType.Descriptor instead.
+func (ReportType) EnumDescriptor() ([]byte, []int) {
+	return file_jamel_report_proto_rawDescGZIP(), []int{0}
+}
+
 type ReportRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id         string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ReportType ReportType `protobuf:"varint,4,opt,name=report_type,json=reportType,proto3,enum=jamel.ReportType" json:"report_type,omitempty"`
 }
 
 func (x *ReportRequest) Reset() {
@@ -65,15 +115,141 @@ func (x *ReportRequest) GetId() string {
 	return ""
 }
 
+func (x *ReportRequest) GetReportType() ReportType {
+	if x != nil {
+		return x.ReportType
+	}
+	return ReportType_PDF
+}
+
+type FileRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *FileRequest) Reset() {
+	*x = FileRequest{}
+	mi := &file_jamel_report_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileRequest) ProtoMessage() {}
+
+func (x *FileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_jamel_report_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileRequest.ProtoReflect.Descriptor instead.
+func (*FileRequest) Descriptor() ([]byte, []int) {
+	return file_jamel_report_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *FileRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type FileResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Filename string `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	Chunk    []byte `protobuf:"bytes,2,opt,name=chunk,proto3" json:"chunk,omitempty"`
+	Size     int64  `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
+}
+
+func (x *FileResponse) Reset() {
+	*x = FileResponse{}
+	mi := &file_jamel_report_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileResponse) ProtoMessage() {}
+
+func (x *FileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_jamel_report_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileResponse.ProtoReflect.Descriptor instead.
+func (*FileResponse) Descriptor() ([]byte, []int) {
+	return file_jamel_report_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *FileResponse) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *FileResponse) GetChunk() []byte {
+	if x != nil {
+		return x.Chunk
+	}
+	return nil
+}
+
+func (x *FileResponse) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
 var File_jamel_report_proto protoreflect.FileDescriptor
 
 var file_jamel_report_proto_rawDesc = []byte{
 	0x0a, 0x12, 0x6a, 0x61, 0x6d, 0x65, 0x6c, 0x2f, 0x72, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x05, 0x6a, 0x61, 0x6d, 0x65, 0x6c, 0x22, 0x1f, 0x0a, 0x0d, 0x52,
+	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x05, 0x6a, 0x61, 0x6d, 0x65, 0x6c, 0x22, 0x53, 0x0a, 0x0d, 0x52,
 	0x65, 0x70, 0x6f, 0x72, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x42, 0x0e, 0x5a, 0x0c,
-	0x6a, 0x61, 0x6d, 0x65, 0x6c, 0x2f, 0x3b, 0x6a, 0x61, 0x6d, 0x65, 0x6c, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x32, 0x0a, 0x0b,
+	0x72, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x0e, 0x32, 0x11, 0x2e, 0x6a, 0x61, 0x6d, 0x65, 0x6c, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74,
+	0x54, 0x79, 0x70, 0x65, 0x52, 0x0a, 0x72, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x54, 0x79, 0x70, 0x65,
+	0x22, 0x1d, 0x0a, 0x0b, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22,
+	0x54, 0x0a, 0x0c, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x1a, 0x0a, 0x08, 0x66, 0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x08, 0x66, 0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x63,
+	0x68, 0x75, 0x6e, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x63, 0x68, 0x75, 0x6e,
+	0x6b, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52,
+	0x04, 0x73, 0x69, 0x7a, 0x65, 0x2a, 0x2b, 0x0a, 0x0a, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x54,
+	0x79, 0x70, 0x65, 0x12, 0x07, 0x0a, 0x03, 0x50, 0x44, 0x46, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04,
+	0x4a, 0x53, 0x4f, 0x4e, 0x10, 0x01, 0x12, 0x0a, 0x0a, 0x06, 0x53, 0x42, 0x4f, 0x4d, 0x5f, 0x52,
+	0x10, 0x02, 0x42, 0x0e, 0x5a, 0x0c, 0x6a, 0x61, 0x6d, 0x65, 0x6c, 0x2f, 0x3b, 0x6a, 0x61, 0x6d,
+	0x65, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -88,16 +264,21 @@ func file_jamel_report_proto_rawDescGZIP() []byte {
 	return file_jamel_report_proto_rawDescData
 }
 
-var file_jamel_report_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_jamel_report_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_jamel_report_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_jamel_report_proto_goTypes = []any{
-	(*ReportRequest)(nil), // 0: jamel.ReportRequest
+	(ReportType)(0),       // 0: jamel.ReportType
+	(*ReportRequest)(nil), // 1: jamel.ReportRequest
+	(*FileRequest)(nil),   // 2: jamel.FileRequest
+	(*FileResponse)(nil),  // 3: jamel.FileResponse
 }
 var file_jamel_report_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: jamel.ReportRequest.report_type:type_name -> jamel.ReportType
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_jamel_report_proto_init() }
@@ -110,13 +291,14 @@ func file_jamel_report_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_jamel_report_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   1,
+			NumEnums:      1,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_jamel_report_proto_goTypes,
 		DependencyIndexes: file_jamel_report_proto_depIdxs,
+		EnumInfos:         file_jamel_report_proto_enumTypes,
 		MessageInfos:      file_jamel_report_proto_msgTypes,
 	}.Build()
 	File_jamel_report_proto = out.File

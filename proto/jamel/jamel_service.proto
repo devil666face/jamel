@@ -12,4 +12,5 @@ service JamelService {
   rpc TaskFromImage(TaskRequest) returns (TaskResponse);
   rpc TaskList(Request) returns (TaskListResponse);
   rpc GetReport(ReportRequest) returns (TaskResponse);
+  rpc GetFile(ReportRequest) returns (stream FileResponse);
 }

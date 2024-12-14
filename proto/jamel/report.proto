@@ -3,7 +3,24 @@ syntax = "proto3";
 package jamel;
 option go_package = "jamel/;jamel";
 
+enum ReportType {
+  PDF =  0;
+  JSON = 1;
+  SBOM_R = 2;
+}
+
 message ReportRequest {
+  string id              = 1;
+  ReportType report_type = 4;
+}
+
+message FileRequest {
   string id    = 1;
+}
+
+message FileResponse {
+  string filename    = 1;
+  bytes chunk        = 2;
+  int64 size         = 3;
 }
 

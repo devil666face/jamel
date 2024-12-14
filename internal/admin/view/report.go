@@ -2,6 +2,7 @@ package view
 
 import (
 	"fmt"
+	"jamel/gen/go/jamel"
 	"jamel/pkg/fs"
 	"strings"
 
@@ -14,16 +15,6 @@ const (
 	show = "show"
 	pdf  = "pdf"
 )
-
-func reportCmds() []string {
-	return []string{
-		list,
-		pdf,
-		json,
-		show,
-		sbom,
-	}
-}
 
 func (v *View) reportExecutor(in string) {
 	args := strings.Fields(in)
@@ -38,21 +29,57 @@ func (v *View) reportExecutor(in string) {
 			ErrorFunc(err)
 			return
 		}
+		go v.setTaskComplete(tasks.Tasks)
 		fmt.Print(FormatTable(tasks.Tasks))
 	case show:
 		if len(args) < 2 {
 			ErrorFunc(fmt.Errorf("set task id"))
 			return
 		}
-		resp, err := v.admin.Client.GetReport(args[1])
+		id, ok := v.indexIdMap[args[1]]
+		if !ok {
+			ErrorFunc(fmt.Errorf("invalid task index"))
+			return
+		}
+		resp, err := v.admin.Client.GetReport(id)
 		if err != nil {
 			ErrorFunc(err)
 			return
 		}
 		fmt.Print(FormatTaskResponse(resp))
 	case json:
+		if len(args) < 2 {
+			ErrorFunc(fmt.Errorf("set task id"))
+			return
+		}
+		id, ok := v.indexIdMap[args[1]]
+		if !ok {
+			ErrorFunc(fmt.Errorf("invalid task index"))
+			return
+		}
+		file, err := v.admin.Client.GetFile(id, jamel.ReportType_JSON)
+		if err != nil {
+			ErrorFunc(err)
+			return
+		}
+		fmt.Printf("\r⬅️ %s - downloaded\n", file)
 	case sbom:
-	case pdf:
+		if len(args) < 2 {
+			ErrorFunc(fmt.Errorf("set task id"))
+			return
+		}
+		id, ok := v.indexIdMap[args[1]]
+		if !ok {
+			ErrorFunc(fmt.Errorf("invalid task index"))
+			return
+		}
+		file, err := v.admin.Client.GetFile(id, jamel.ReportType_SBOM_R)
+		if err != nil {
+			ErrorFunc(err)
+			return
+		}
+		fmt.Printf("\r⬅️ %s - downloaded\n", file)
+	// case pdf:
 	case exit:
 		return
 	default:
@@ -64,9 +91,9 @@ func (v *View) reportCompleter(d prompt.Document) []prompt.Suggest {
 	var complete = []prompt.Suggest{
 		{Text: list, Description: "show all results"},
 		{Text: show, Description: "show report for task"},
-		{Text: pdf, Description: "download report for task in pdf"},
 		{Text: json, Description: "download report for task in json"},
 		{Text: sbom, Description: "download sbom file for task"},
+		// {Text: pdf, Description: "download report for task in pdf"},
 		{Text: exit, Description: "close"},
 	}
 
@@ -88,6 +115,13 @@ func (v *View) reportCompleter(d prompt.Document) []prompt.Suggest {
 	}
 	if HasPrefix(d, sbom) {
 		complete = ListToSuggest(fs.MustFilesInDot("json"))
+	}
+
+	if HasPrefix(d, pdf) ||
+		HasPrefix(d, json) ||
+		HasPrefix(d, sbom) ||
+		HasPrefix(d, show) {
+		complete = v.taskComplete
 	}
 
 	return prompt.FilterContains(

@@ -46,6 +46,8 @@ type View struct {
 	prompt         *prompt.Prompt
 	admin          *admin.Admin
 	dockerComplete []string
+	taskComplete   []prompt.Suggest
+	indexIdMap     map[string]string
 }
 
 func New(_admin *admin.Admin) *View {
@@ -78,6 +80,7 @@ func (v *View) executor(in string) {
 			fmt.Sprintf("%s%s %s # ", title, "⚙️", analyze),
 		).Run()
 	case report:
+		go v.setTaskComplete()
 		NewPrompt(
 			v.reportExecutor,
 			v.reportCompleter,
@@ -103,6 +106,31 @@ func (v *View) completer(d prompt.Document) []prompt.Suggest {
 		}
 	}
 	return prompt.FilterContains(complete, d.GetWordBeforeCursor(), true)
+}
+
+func (v *View) setTaskComplete(opttasks ...[]*jamel.TaskResponse) {
+	if len(opttasks) == 0 {
+		tasks, err := v.admin.Client.TaskList()
+		if err != nil {
+			return
+		}
+		opttasks = append(opttasks, tasks.Tasks)
+	}
+	var (
+		suggest    = []prompt.Suggest{}
+		indexIdMap = make(map[string]string)
+	)
+	for i, task := range opttasks[0] {
+		suggest = append(suggest,
+			prompt.Suggest{
+				Text:        fmt.Sprint(i + 1),
+				Description: fmt.Sprintf("%s %s", task.Name, respTime(task.CreatedAt)),
+			},
+		)
+		indexIdMap[fmt.Sprint(i+1)] = task.TaskId
+	}
+	v.taskComplete = suggest
+	v.indexIdMap = indexIdMap
 }
 
 func NewPrompt(
@@ -199,7 +227,7 @@ func FormatTable(tasks []*jamel.TaskResponse) string {
 	for i, task := range tasks {
 		fmt.Fprintf(w,
 			"\n%d\t%s\t%s\t%s\t%s",
-			i,
+			i+1,
 			task.TaskId,
 			respTime(task.CreatedAt),
 			task.Name,

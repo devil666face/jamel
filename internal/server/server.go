@@ -100,6 +100,12 @@ func (s *Server) GetReport(ctx context.Context, request *jamel.ReportRequest) (*
 		GetReport(request)
 }
 
+func (s *Server) GetFile(request *jamel.ReportRequest, stream jamel.JamelService_GetFileServer) error {
+	return s.
+		streamwrap(stream).
+		GetFile(request, stream)
+}
+
 func (s *Server) ResponseQueueHandler() error {
 	var (
 		respch      = make(chan amqp.Delivery)

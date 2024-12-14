@@ -49,7 +49,7 @@ func (a *Api) TaskFromFile(filename string, tasktype jamel.TaskType) (*jamel.Tas
 		sent += len(buf)
 		percent := int(float64(sent) / float64(stat.Size()) * 100)
 		if (_p != percent) && (stat.Size() > bufSize) {
-			fmt.Printf("\r➡️ uploading %s %d%%\r", file.Name(), percent)
+			fmt.Printf("\r➡️ %s %d%%\r", file.Name(), percent)
 		}
 		_p = percent
 	}

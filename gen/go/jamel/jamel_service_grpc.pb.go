@@ -23,6 +23,7 @@ const (
 	JamelService_TaskFromImage_FullMethodName = "/jamel.JamelService/TaskFromImage"
 	JamelService_TaskList_FullMethodName      = "/jamel.JamelService/TaskList"
 	JamelService_GetReport_FullMethodName     = "/jamel.JamelService/GetReport"
+	JamelService_GetFile_FullMethodName       = "/jamel.JamelService/GetFile"
 )
 
 // JamelServiceClient is the client API for JamelService service.
@@ -33,6 +34,7 @@ type JamelServiceClient interface {
 	TaskFromImage(ctx context.Context, in *TaskRequest, opts ...grpc.CallOption) (*TaskResponse, error)
 	TaskList(ctx context.Context, in *Request, opts ...grpc.CallOption) (*TaskListResponse, error)
 	GetReport(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*TaskResponse, error)
+	GetFile(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[FileResponse], error)
 }
 
 type jamelServiceClient struct {
@@ -86,6 +88,25 @@ func (c *jamelServiceClient) GetReport(ctx context.Context, in *ReportRequest, o
 	return out, nil
 }
 
+func (c *jamelServiceClient) GetFile(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[FileResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &JamelService_ServiceDesc.Streams[1], JamelService_GetFile_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ReportRequest, FileResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type JamelService_GetFileClient = grpc.ServerStreamingClient[FileResponse]
+
 // JamelServiceServer is the server API for JamelService service.
 // All implementations must embed UnimplementedJamelServiceServer
 // for forward compatibility.
@@ -94,6 +115,7 @@ type JamelServiceServer interface {
 	TaskFromImage(context.Context, *TaskRequest) (*TaskResponse, error)
 	TaskList(context.Context, *Request) (*TaskListResponse, error)
 	GetReport(context.Context, *ReportRequest) (*TaskResponse, error)
+	GetFile(*ReportRequest, grpc.ServerStreamingServer[FileResponse]) error
 	mustEmbedUnimplementedJamelServiceServer()
 }
 
@@ -115,6 +137,9 @@ func (UnimplementedJamelServiceServer) TaskList(context.Context, *Request) (*Tas
 }
 func (UnimplementedJamelServiceServer) GetReport(context.Context, *ReportRequest) (*TaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetReport not implemented")
+}
+func (UnimplementedJamelServiceServer) GetFile(*ReportRequest, grpc.ServerStreamingServer[FileResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method GetFile not implemented")
 }
 func (UnimplementedJamelServiceServer) mustEmbedUnimplementedJamelServiceServer() {}
 func (UnimplementedJamelServiceServer) testEmbeddedByValue()                      {}
@@ -198,6 +223,17 @@ func _JamelService_GetReport_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _JamelService_GetFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ReportRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(JamelServiceServer).GetFile(m, &grpc.GenericServerStream[ReportRequest, FileResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type JamelService_GetFileServer = grpc.ServerStreamingServer[FileResponse]
+
 // JamelService_ServiceDesc is the grpc.ServiceDesc for JamelService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -223,6 +259,11 @@ var JamelService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "TaskFromFile",
 			Handler:       _JamelService_TaskFromFile_Handler,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetFile",
+			Handler:       _JamelService_GetFile_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "jamel/jamel_service.proto",

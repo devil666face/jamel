@@ -126,9 +126,10 @@ func loadTLSCreds() (credentials.TransportCredentials, error) {
 	}
 
 	config := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-		ClientCAs:    certPool,
+		Certificates:       []tls.Certificate{cert},
+		ClientAuth:         tls.RequireAndVerifyClientCert,
+		ClientCAs:          certPool,
+		InsecureSkipVerify: true,
 	}
 	return credentials.NewTLS(config), nil
 }

@@ -26,6 +26,7 @@ build-dev:
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER --all-tags
   tags:
     - builder
+    - git.codenrock.com
   only:
     - dev
 
@@ -46,6 +47,7 @@ build-main:
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER --all-tags
   tags:
     - builder
+    - git.codenrock.com
   only:
     - main
 
@@ -62,6 +64,7 @@ build-admin:
     expire_in: 1 week
   tags:
     - builder
+    - git.codenrock.com
 
 check-admin:
   stage: test
@@ -83,6 +86,7 @@ check-admin:
     - build-admin
   tags:
     - builder
+    - git.codenrock.com
 
 # deploy-dev:
 #   variables:

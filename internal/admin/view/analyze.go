@@ -43,6 +43,7 @@ func (v *View) analyzeAction(cmd string, filename string) {
 		resp *jamel.TaskResponse
 		err  error
 	)
+	fmt.Printf("\r🔎 task %s:%s - created\n", cmd, filename)
 	switch analyzeMap[cmd] {
 	case jamel.TaskType_DOCKER:
 		resp, err = v.admin.Client.TaskFromImage(filename)
@@ -75,7 +76,6 @@ func (v *View) analyzeExecutor(in string) {
 		)
 		return
 	}
-
 	switch args[0] {
 	case exit:
 		return

@@ -12,8 +12,8 @@ variables:
 build-dev:
   stage: build
   services:
-    - docker:dind
-  image: docker:latest
+    - git.codenrock.com:5050/5hm3l/jamel/docker:dind
+  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -25,15 +25,15 @@ build-dev:
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT --all-tags
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER --all-tags
   tags:
-    - builder
+    - jamel-dev
   only:
     - dev
 
 build-main:
   stage: build
   services:
-    - docker:dind
-  image: docker:latest
+    - git.codenrock.com:5050/5hm3l/jamel/docker:dind
+  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -45,7 +45,7 @@ build-main:
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$CLIENT --all-tags
     - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$APP-$SERVER --all-tags
   tags:
-    - builder
+    - jamel-dev
   only:
     - main
 
@@ -61,13 +61,13 @@ build-admin:
       - bin/jamel-admin
     expire_in: 1 week
   tags:
-    - builder
+    - jamel-dev
 
 check-admin:
   stage: test
   services:
-    - docker:dind
-  image: docker:latest
+    - git.codenrock.com:5050/5hm3l/jamel/docker:dind
+  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -82,14 +82,14 @@ check-admin:
   dependencies:
     - build-admin
   tags:
-    - builder
+    - jamel-dev
 
 deploy-dev:
   variables:
     DOCKER_HOST: "unix:///var/run/docker.sock"
     DOCKER_TLS_CERTDIR: ""
   stage: deploy
-  image: docker:latest
+  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker info
@@ -100,5 +100,28 @@ deploy-dev:
     - docker-compose -f docker-compose.dev.yaml ps
   dependencies:
     - check-admin
+  only:
+    - dev
+  tags:
+    - jamel-dev
+
+deploy-prod:
+  variables:
+    DOCKER_HOST: "unix:///var/run/docker.sock"
+    DOCKER_TLS_CERTDIR: ""
+  stage: deploy
+  image: git.codenrock.com:5050/5hm3l/jamel/docker:latest
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker info
+  script:
+    - echo "Starting services with docker-compose..."
+    - docker-compose -f docker-compose.yaml pull
+    - docker-compose -f docker-compose.yaml up -d
+    - docker-compose -f docker-compose.yaml ps
+  dependencies:
+    - check-admin
+  only:
+    - main
   tags:
     - jamel-dev

@@ -55,10 +55,10 @@ build-admin:
   before_script:
     - apk add --no-cache make
   script:
-    - make build-admin
+    - make release
   artifacts:
     paths:
-      - bin/jamel-admin
+      - bin/*
     expire_in: 1 week
   tags:
     - jamel-dev

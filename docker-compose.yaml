@@ -1,6 +1,6 @@
 services:
   jamel-server:
-    image: git.codenrock.com:5050/5hm3l/jamel/jamel-server:latest
+    image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/jamel-server:latest
     container_name: server
     restart: unless-stopped
     env_file: .server.sample.env
@@ -15,7 +15,7 @@ services:
         condition: service_healthy
 
   jamel-client:
-    image: git.codenrock.com:5050/5hm3l/jamel/jamel-client:latest
+    image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/jamel-client:latest
     container_name: client
     restart: unless-stopped
     env_file: .client.sample.env
@@ -29,7 +29,7 @@ services:
 
   rabbitmq:
     #image: rabbitmq:3-management
-    image: git.codenrock.com:5050/5hm3l/jamel/rabbitmq:3-management
+    image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/rabbitmq:3-management
     container_name: rabbitmq
     ports:
       - "5672:5672"
@@ -48,7 +48,7 @@ services:
 
   minio:
     #image: minio/minio:latest
-    image: git.codenrock.com:5050/5hm3l/jamel/minio:latest
+    image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/minio:latest
     container_name: minio
     ports:
       - "9000:9000"

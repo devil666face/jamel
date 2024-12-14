@@ -74,10 +74,10 @@ check-admin:
     - docker pull ubuntu:latest
     - docker save -o ubuntu.tar ubuntu:latest
   script:
-    - chmod +x ./test.sh && chmod +x ./bin/jamel-admin
+    - chmod +x ./test.sh && chmod +x ./bin/jamel-admin_linux
     - docker-compose -f docker-compose.dev.yaml up -d
     - for i in {0..20}; do
-      ./bin/jamel-admin ubuntu.tar &
+      ./bin/jamel-admin_linux ubuntu.tar &
       done
   dependencies:
     - build-admin

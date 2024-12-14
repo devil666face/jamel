@@ -28,7 +28,8 @@ services:
         condition: service_healthy
 
   rabbitmq:
-    image: rabbitmq:3-management
+    #image: rabbitmq:3-management
+    image: git.codenrock.com:5050/5hm3l/jamel/rabbitmq:3-management
     container_name: rabbitmq
     ports:
       - "5672:5672"
@@ -46,7 +47,8 @@ services:
       retries: 5
 
   minio:
-    image: minio/minio:latest
+    #image: minio/minio:latest
+    image: git.codenrock.com:5050/5hm3l/jamel/minio:latest
     container_name: minio
     ports:
       - "9000:9000"

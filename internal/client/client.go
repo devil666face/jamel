@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"jamel/gen/go/jamel"
+	"jamel/pkg/fs"
 	"jamel/pkg/rmq"
+	"jamel/pkg/sbom"
 
 	"github.com/streadway/amqp"
 )
@@ -48,6 +50,7 @@ var TaskTypeMap = map[jamel.TaskType]string{
 	jamel.TaskType_DOCKER:         "docker",
 	jamel.TaskType_DOCKER_ARCHIVE: "docker-archive",
 	jamel.TaskType_SBOM:           "sbom",
+	jamel.TaskType_FILE:           "sbom",
 }
 
 func (c *Client) Run() error {
@@ -77,11 +80,11 @@ func (c *Client) Run() error {
 				}
 				switch resp.TaskType {
 				case jamel.TaskType_DOCKER:
-					if resp.Report, resp.Json, resp.Sbom, err = c.NewTaskFromImage(&resp); err != nil {
+					if resp.Report, resp.Json, resp.Sbom, err = c.TaskFromImage(&resp); err != nil {
 						resp.Error = err.Error()
 					}
 				default:
-					if resp.Report, resp.Json, resp.Sbom, err = c.NewTaskFromFile(&resp); err != nil {
+					if resp.Report, resp.Json, resp.Sbom, err = c.TaskFromFile(&resp); err != nil {
 						resp.Error = err.Error()
 					}
 				}
@@ -106,10 +109,22 @@ func (c *Client) Run() error {
 	return nil
 }
 
-func (c *Client) NewTaskFromFile(task *jamel.TaskResponse) (string, string, string, error) {
+func (c *Client) TaskFromFile(task *jamel.TaskResponse) (string, string, string, error) {
+	var errFunc = func(err error) (string, string, string, error) { return "", "", "", err }
 	if _, err := c.s3.Download(task.TaskId); err != nil {
-		return "", "", "", fmt.Errorf("download from s3 error: %w", err)
+		return errFunc(fmt.Errorf("download from s3 error: %w", err))
 	}
+
+	if task.TaskType == jamel.TaskType_FILE {
+		sbom, err := sbom.Get(task.TaskId)
+		if err != nil {
+			return errFunc(fmt.Errorf("failed to get sbom file: %w", err))
+		}
+		if err := fs.WriteFile(task.TaskId, sbom); err != nil {
+			return errFunc(fmt.Errorf("failed to save sbom file: %w", err))
+		}
+	}
+
 	defer func() {
 		if err := os.Remove(task.TaskId); err != nil {
 			return
@@ -118,7 +133,7 @@ func (c *Client) NewTaskFromFile(task *jamel.TaskResponse) (string, string, stri
 	return c.cve.GetUnwrap(TaskTypeMap[task.TaskType], task.TaskId)
 }
 
-func (c *Client) NewTaskFromImage(task *jamel.TaskResponse) (string, string, string, error) {
+func (c *Client) TaskFromImage(task *jamel.TaskResponse) (string, string, string, error) {
 	return c.cve.GetUnwrap(TaskTypeMap[task.TaskType], task.Name)
 }
 

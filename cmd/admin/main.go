@@ -60,7 +60,7 @@ func main() {
 
 	flag.Parse()
 	if *force != "" {
-		out, err := _admin.NewTaskFromImage(*force)
+		out, err := _admin.Client.TaskFromImage(*force)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -81,8 +81,9 @@ func loadTLSCreds() (credentials.TransportCredentials, error) {
 		return nil, err
 	}
 	config := &tls.Config{
-		Certificates: []tls.Certificate{clientCert},
-		RootCAs:      certPool,
+		Certificates:       []tls.Certificate{clientCert},
+		RootCAs:            certPool,
+		InsecureSkipVerify: true,
 	}
 	return credentials.NewTLS(config), nil
 }

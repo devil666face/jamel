@@ -31,3 +31,18 @@ func (t *Task) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
+
+func (t *Task) TaskToResp(opts ...func(t *Task)) *jamel.TaskResponse {
+	if len(opts) > 0 {
+		opts[0](t)
+	}
+	return &jamel.TaskResponse{
+		TaskId:    t.ID,
+		Name:      t.Name,
+		CreatedAt: t.CreatedAt.Unix(),
+		TaskType:  t.TaskType,
+		Sbom:      t.Sbom,
+		Json:      t.Json,
+		Report:    t.Report,
+	}
+}

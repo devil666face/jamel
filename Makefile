@@ -5,7 +5,7 @@ include build.env
 export $(shell sed 's/=.*//' build.env)
 $(shell [ -f bin ] || mkdir -p $(BIN))
 
-# SBOM = sbom
+SBOM = sbom
 APP = jamel
 CLIENT = client
 SERVER = server
@@ -28,10 +28,10 @@ help:
 
 build: build-client build-server build-admin .crop ## build all
 
-# build-sbom: ## build sbom
-# 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
-# 		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
-# 		-o $(BIN)/$(SBOM) cmd/$(SBOM)/main.go
+build-sbom: ## build sbom
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
+		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+		-o $(BIN)/$(SBOM) cmd/$(SBOM)/main.go
 
 build-client: ## build client
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \

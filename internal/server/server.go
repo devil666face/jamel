@@ -9,7 +9,6 @@ import (
 	"jamel/internal/server/service/models"
 	"jamel/pkg/queue"
 	"jamel/pkg/rmq"
-	"log"
 
 	"github.com/streadway/amqp"
 	"google.golang.org/grpc"
@@ -123,7 +122,7 @@ func (s *Server) ResponseQueueHandler() error {
 	go func() {
 		for data := range respch {
 			var resp = jamel.TaskResponse{}
-			log.Printf("recieved resp: %v", string(data.Body))
+			// log.Printf("recieved resp: %v", string(data.Body))
 			if err := json.Unmarshal(data.Body, &resp); err != nil {
 				errch <- fmt.Errorf("unmarshal resp from queue error: %w", err)
 				continue

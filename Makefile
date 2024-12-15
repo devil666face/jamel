@@ -48,22 +48,22 @@ build-server: ## build server
 
 build-admin-linux: ## build admin for linux
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
-	  $(GOBIN) build -ldflags="$(LINUX_LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+	  $(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
 	  -o $(BIN)/$(APP)-$(ADMIN)_linux cmd/$(ADMIN)/main.go
 
 build-admin-windows: ## build admin for windows
 	CGO_ENABLED=0 GOOS=windows GOARCH=$(GOARCH) \
-	  $(GOBIN) build -ldflags="$(WINDOWS_LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+	  $(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
 	  -o $(BIN)/$(APP)-$(ADMIN)_windows.exe cmd/$(ADMIN)/main.go
 
 build-admin-darwin-amd64: ## build admin for darwin
 	CGO_ENABLED=0 GOOS=darwin GOARCH=$(GOARCH) \
-	  $(GOBIN) build -ldflags="$(LINUX_LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+	  $(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
 	  -o $(BIN)/$(APP)-$(ADMIN)_darwin_amd64 cmd/$(ADMIN)/main.go
 
 build-admin-darwin-arm64: ## build admin for darwin
 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 \
-	  $(GOBIN) build -ldflags="$(LINUX_LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+	  $(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
 	  -o $(BIN)/$(APP)-$(ADMIN)_darwin_arm cmd/$(ADMIN)/main.go
 
 gen-proto: install-proto ## generate golang from protobuf files

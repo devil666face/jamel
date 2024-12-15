@@ -3,8 +3,14 @@ syntax = "proto3";
 package jamel;
 option go_package = "jamel/;jamel";
 
+import "jamel/default.proto";
 import "jamel/task.proto";
+import "jamel/report.proto";
 
 service JamelService {
-  rpc NewTaskFromFile(stream TaskRequest) returns (TaskResponse);
+  rpc TaskFromFile(stream TaskRequest) returns (TaskResponse);
+  rpc TaskFromImage(TaskRequest) returns (TaskResponse);
+  rpc TaskList(Request) returns (TaskListResponse);
+  rpc GetReport(ReportRequest) returns (TaskResponse);
+  rpc GetFile(ReportRequest) returns (stream FileResponse);
 }

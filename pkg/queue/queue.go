@@ -33,6 +33,9 @@ func (q *Queue) Get(id string) (*jamel.TaskResponse, error) {
 	if !ok {
 		return nil, ErrNotFound
 	}
+	if resp.Error != "" {
+		return nil, errors.New(resp.Error)
+	}
 	delete(q.s, id)
 	return resp, nil
 }
@@ -59,7 +62,7 @@ func (q *Queue) WaitResp(id string, timeoutsec ...time.Duration) (*jamel.TaskRes
 		default:
 			resp, err := q.Get(id)
 			if errors.Is(err, ErrNotFound) {
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(busyWait)
 				continue
 			}
 			return resp, err

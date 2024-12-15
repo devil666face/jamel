@@ -45,6 +45,8 @@ func Must(
 	}
 	_grpc := grpc.NewServer(
 		grpc.Creds(creds),
+		grpc.MaxRecvMsgSize(10*1024*1024),
+		grpc.MaxSendMsgSize(10*1024*1024),
 	)
 	jamel.RegisterJamelServiceServer(
 		_grpc,
@@ -73,10 +75,34 @@ func (s *Server) streamwrap(stream Contextable) *handler.Handler {
 	return s.wrap(&ctx)
 }
 
-func (s *Server) NewTaskFromFile(stream jamel.JamelService_NewTaskFromFileServer) error {
+func (s *Server) TaskFromFile(stream jamel.JamelService_TaskFromFileServer) error {
 	return s.
 		streamwrap(stream).
-		NewTaskFromFile(stream)
+		TaskFromFile(stream)
+}
+
+func (s *Server) TaskFromImage(ctx context.Context, request *jamel.TaskRequest) (*jamel.TaskResponse, error) {
+	return s.
+		wrap(&ctx).
+		TaskFromImage(request)
+}
+
+func (s *Server) TaskList(ctx context.Context, request *jamel.Request) (*jamel.TaskListResponse, error) {
+	return s.
+		wrap(&ctx).
+		TaskList(request)
+}
+
+func (s *Server) GetReport(ctx context.Context, request *jamel.ReportRequest) (*jamel.TaskResponse, error) {
+	return s.
+		wrap(&ctx).
+		GetReport(request)
+}
+
+func (s *Server) GetFile(request *jamel.ReportRequest, stream jamel.JamelService_GetFileServer) error {
+	return s.
+		streamwrap(stream).
+		GetFile(request, stream)
 }
 
 func (s *Server) ResponseQueueHandler() error {
@@ -96,23 +122,34 @@ func (s *Server) ResponseQueueHandler() error {
 	go func() {
 		for data := range respch {
 			var resp = jamel.TaskResponse{}
+			// log.Printf("recieved resp: %v", string(data.Body))
 			if err := json.Unmarshal(data.Body, &resp); err != nil {
 				errch <- fmt.Errorf("unmarshal resp from queue error: %w", err)
 				continue
 			}
 			s.resulst.Set(&resp)
-			if err := s.s3.Delete(resp.TaskId); err != nil {
-				errch <- fmt.Errorf("failed to delete obj from s3: %w", err)
+
+			switch resp.TaskType {
+			case jamel.TaskType_DOCKER:
 				continue
+			default:
+				if err := s.s3.Delete(resp.TaskId); err != nil {
+					errch <- fmt.Errorf("failed to delete obj from s3: %w", err)
+					continue
+				}
 			}
 		}
 	}()
 
 	for err := range errch {
 		if err != nil {
-			cancel()
+			// cancel()
 			return fmt.Errorf("resp queue error: %w", err)
 		}
 	}
 	return nil
+}
+
+func (s *Server) Reconnect() error {
+	return s.rmq.Connect()
 }

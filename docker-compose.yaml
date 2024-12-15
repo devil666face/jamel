@@ -1,0 +1,66 @@
+services:
+  jamel-server:
+    image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/jamel-server:latest
+    container_name: server
+    restart: unless-stopped
+    env_file: .server.sample.env
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./db:/app/db
+    depends_on:     
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  jamel-client:
+    image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/jamel-client:latest
+    container_name: client
+    restart: unless-stopped
+    env_file: .client.sample.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  rabbitmq:
+    #image: rabbitmq:3-management
+    image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmqctl status || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    #image: minio/minio:latest
+    image: git.codenrock.com:5050/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: password
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

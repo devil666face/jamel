@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,9 +12,14 @@ import (
 
 	"jamel/internal/admin"
 	"jamel/internal/admin/config"
+	"jamel/internal/admin/view"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+)
+
+var (
+	force = flag.String("force", "", "use force for check image from docker hub without ui")
 )
 
 //go:embed server.crt
@@ -28,15 +34,19 @@ var TLSAdminCert string
 func main() {
 	creds, err := loadTLSCreds()
 	if err != nil {
-		fmt.Printf("failed to load server cert: %v\n", err)
+		log.Fatalf("failed to load server cert: %v\n", err)
 	}
 	_config := config.Must()
 	conn, err := grpc.NewClient(
 		_config.Server,
 		grpc.WithTransportCredentials(creds),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(10*1024*1024),
+			grpc.MaxCallSendMsgSize(10*1024*1024),
+		),
 	)
 	if err != nil {
-		fmt.Printf("error connect to server: %v\n", err)
+		log.Fatalf("error connect to server: %v\n", err)
 	}
 	defer conn.Close()
 	_admin := admin.Must(
@@ -44,9 +54,20 @@ func main() {
 		_config.Password,
 		conn,
 	)
-	if err := _admin.NewTaskFromFile(os.Args[1]); err != nil {
-		log.Fatalln(err)
+	_view := view.New(
+		_admin,
+	)
+
+	flag.Parse()
+	if *force != "" {
+		out, err := _admin.Client.TaskFromImage(*force)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		fmt.Println(out)
+		os.Exit(0)
 	}
+	_view.Run()
 }
 
 func loadTLSCreds() (credentials.TransportCredentials, error) {
@@ -60,8 +81,9 @@ func loadTLSCreds() (credentials.TransportCredentials, error) {
 		return nil, err
 	}
 	config := &tls.Config{
-		Certificates: []tls.Certificate{clientCert},
-		RootCAs:      certPool,
+		Certificates:       []tls.Certificate{clientCert},
+		RootCAs:            certPool,
+		InsecureSkipVerify: true,
 	}
 	return credentials.NewTLS(config), nil
 }

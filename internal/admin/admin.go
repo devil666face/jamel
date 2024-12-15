@@ -7,7 +7,7 @@ import (
 )
 
 type Admin struct {
-	client *api.Api
+	Client *api.Api
 }
 
 func Must(
@@ -15,13 +15,9 @@ func Must(
 	conn *grpc.ClientConn,
 ) *Admin {
 	return &Admin{
-		client: api.New(
+		Client: api.New(
 			username, passowrd,
 			conn,
 		),
 	}
-}
-
-func (a *Admin) NewTaskFromFile(filename string) error {
-	return a.client.NewTaskFromFile(filename)
 }

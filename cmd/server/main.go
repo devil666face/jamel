@@ -100,6 +100,9 @@ func main() {
 			if err := _server.ResponseQueueHandler(); err != nil {
 				log.Printf("critical queue runtime error: %v", err)
 			}
+			if err := _server.Reconnect(); err != nil {
+				log.Printf("failed to reconnect rmq: %v", err)
+			}
 		}
 	}()
 
@@ -123,9 +126,10 @@ func loadTLSCreds() (credentials.TransportCredentials, error) {
 	}
 
 	config := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-		ClientCAs:    certPool,
+		Certificates:       []tls.Certificate{cert},
+		ClientAuth:         tls.RequireAndVerifyClientCert,
+		ClientCAs:          certPool,
+		InsecureSkipVerify: true,
 	}
 	return credentials.NewTLS(config), nil
 }

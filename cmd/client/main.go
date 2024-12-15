@@ -42,14 +42,12 @@ func main() {
 		_cve,
 	)
 	for {
+		log.Println("loop started")
 		if err := _client.Run(); err != nil {
 			log.Printf("critical queue runtime error: %v", err)
 		}
+		if err := _client.Reconnect(); err != nil {
+			log.Printf("failed to reconnect rmq: %v", err)
+		}
 	}
-
-	// out, err := cve.Get(os.Args[1])
-	// 	log.Fatalln(err)
-	// if err != nil {
-	// }
-	// fmt.Println(string(out))
 }

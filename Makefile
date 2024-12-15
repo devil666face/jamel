@@ -5,8 +5,8 @@ include build.env
 export $(shell sed 's/=.*//' build.env)
 $(shell [ -f bin ] || mkdir -p $(BIN))
 
-# SBOM = sbom
 APP = jamel
+SBOM = sbom
 CLIENT = client
 SERVER = server
 ADMIN = admin
@@ -16,22 +16,25 @@ GOARCH = amd64
 LDFLAGS = -extldflags '-static' -w -s -buildid= 
 GCFLAGS = all=-trimpath=$(shell pwd) -dwarf=false -l
 ASMFLAGS = all=-trimpath=$(shell pwd)
+STRIP_FILES = $(BIN)/$(APP)-$(CLIENT) $(BIN)/$(APP)-$(SERVER) $(BIN)/$(APP)-$(ADMIN)_linux $(BIN)/$(APP)-$(ADMIN)_windows.exe
 
 help:
 	@cat $(MAKEFILE_LIST) | grep -E '^[a-zA-Z_-]+:.*?## .*$$' | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .crop:
-	for file in $(wildcard $(BIN)/$(APP)_*); do \
+	for file in $(STRIP_FILES); do \
 		strip $$file; \
 		objcopy --strip-unneeded $$file; \
 	done
 
-build: build-client build-server build-admin .crop ## build all
+build: build-client build-server build-admin-linux .crop ## build
+release: build-client build-server release-admin .crop ## release
+release-admin: build-admin-linux build-admin-windows build-admin-darwin-amd64 build-admin-darwin-arm64 ## build all admin bin
 
-# build-sbom: ## build sbom
-# 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
-# 		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
-# 		-o $(BIN)/$(SBOM) cmd/$(SBOM)/main.go
+build-sbom: ## build sbom
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
+		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+		-o $(BIN)/$(SBOM) cmd/$(SBOM)/main.go
 
 build-client: ## build client
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
@@ -43,10 +46,25 @@ build-server: ## build server
 		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
 		-o $(BIN)/$(APP)-$(SERVER) cmd/$(SERVER)/main.go
 
-build-admin: ## build admin
+build-admin-linux: ## build admin for linux
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) \
-		$(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
-		-o $(BIN)/$(APP)-$(ADMIN) cmd/$(ADMIN)/main.go
+	  $(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+	  -o $(BIN)/$(APP)-$(ADMIN)_linux cmd/$(ADMIN)/main.go
+
+build-admin-windows: ## build admin for windows
+	CGO_ENABLED=0 GOOS=windows GOARCH=$(GOARCH) \
+	  $(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+	  -o $(BIN)/$(APP)-$(ADMIN)_windows.exe cmd/$(ADMIN)/main.go
+
+build-admin-darwin-amd64: ## build admin for darwin
+	CGO_ENABLED=0 GOOS=darwin GOARCH=$(GOARCH) \
+	  $(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+	  -o $(BIN)/$(APP)-$(ADMIN)_darwin_amd64 cmd/$(ADMIN)/main.go
+
+build-admin-darwin-arm64: ## build admin for darwin
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 \
+	  $(GOBIN) build -ldflags="$(LDFLAGS)" -trimpath -gcflags="$(GCFLAGS)" -asmflags="$(ASMFLAGS)" \
+	  -o $(BIN)/$(APP)-$(ADMIN)_darwin_arm cmd/$(ADMIN)/main.go
 
 gen-proto: install-proto ## generate golang from protobuf files
 	protoc -I proto/ proto/jamel/*.proto --go_out=./gen/go/ --go_opt=paths=source_relative --go-grpc_out=./gen/go/ --go-grpc_opt=paths=source_relative
@@ -75,10 +93,10 @@ gen-certs: ## generate grpc ssl certs
 	rm -f *.crt *.key *.cnf *.csr
 
 dev-up: ## up development environment
-	docker compose -f docker-compose.dev.yaml up -d
+	docker compose -f docker-compose.local.yaml up -d
 
 dev-rm: ## rm development environment
-	docker compose -f docker-compose.dev.yaml down
+	docker compose -f docker-compose.local.yaml down
 	sudo rm -rf rabbitmq
 	sudo rm -rf minio
 

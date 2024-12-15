@@ -88,7 +88,7 @@ func (v *View) analyzeCompleter(d prompt.Document) []prompt.Suggest {
 	var complete = []prompt.Suggest{
 		{Text: docker, Description: "image from docker.hub"},
 		{Text: dockerArchive, Description: "image from local tar archive"},
-		{Text: file, Description: "file or dir on disk"},
+		{Text: file, Description: "file or zip/tar archive"},
 		{Text: sbom, Description: "json sbom file"},
 		{Text: exit, Description: "close"},
 	}

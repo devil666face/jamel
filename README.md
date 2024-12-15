@@ -21,7 +21,7 @@ apt-get install docker.io docker-compose-v2 --yes
 ## Запуск приложения
 
 ```bash
-git clone https://git.codenrock.com/5hm3l/jamel
+git clone https://git.codenrock.com/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel
 ```
 
 ```

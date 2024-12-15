@@ -83,7 +83,7 @@ docker logs client
 
 Дождитесь появления строки `updated finished` в логах - это значит, что базы обновлены и можно работать
 
-Загрузите [бинарный файл для управления]() для соответствующей ос/архитектуры
+Загрузите [бинарный файл для управления](https://git.codenrock.com/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/-/releases) для соответствующей ос/архитектуры
 
 ```bash
 jamel-admin_linux - linux amd64

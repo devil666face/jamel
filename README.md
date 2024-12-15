@@ -142,7 +142,7 @@ export SERVER=192.168.10.10:8443
 
 # Описание инфраструктуры
 
-![jamel-scheme](https://git.codenrock.com/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/-/blob/readme/documentation/jamel-scheme.png?ref_type=heads)
+![jamel-scheme](https://git.codenrock.com/sovkombank-securehack-1331/cnrprod1733496609-team-81653/jamel/-/blob/main/documentation/jamel-scheme.png?ref_type=heads)
 
 Общая структура проекта:
 jamel-admin (процесс 1 - передает данные для проверки и выводит результат);
